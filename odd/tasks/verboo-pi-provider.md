@@ -86,16 +86,59 @@ test/                 network guard + unit tests + real-pi-ai integration with m
 compat, notes[] }`. `name` is derived from `id` when Verboo omits `display_name` (it does today).
 Generated file carries a provenance header (source, fetchedAt, modelCount) and per-model notes.
 
-### Compat defaults (each backed by evidence)
+### Compat: MEASURED (scripts/probe-report.json, 2026-09-25)
 
-- `thinkingFormat: "openai"` (default) — Verboo documents `reasoning_effort` as the wire field.
-- `supportsReasoningEffort: true` — same.
-- `supportsDeveloperRole: false` — Verboo message roles are only `system|user|assistant|tool`.
-- `maxTokensField: "max_tokens"` — Verboo documents both; `max_tokens` is the wider-accepted one.
-- `supportsFinishReason: true` — Verboo documents a `finish_reason` chunk. Fail-visible on truncation.
-- `supportsUsageInStreaming` — set from the probe report (Verboo documents a final `usage` chunk).
-- Explicitly **not** set: `requiresReasoningContentOnAssistantMessages` (unproven) — unless the probe
-  shows Verboo requires it.
+All six flags are settled by probe, not assumption. Do not re-litigate.
+
+```
+compat: {
+  thinkingFormat: "openai",        // Verboo documents reasoning_effort as the wire field
+  supportsReasoningEffort: true,   // reasoning_effort:"max" => 200
+  supportsDeveloperRole: false,    // docs list roles system|user|assistant|tool only
+  maxTokensField: "max_tokens",    // documented; measured 200
+  supportsFinishReason: true,      // finish_reason present in stream AND non-stream responses
+  supportsUsageInStreaming: true,  // usage chunk present both with AND without stream_options
+}
+```
+
+**No payload sanitizer is needed — measured, not assumed.** Verboo returned `200` for every case
+that broke NaN: `tools: []`, unknown/extra fields (`store`, `made_up_field_for_probe`), and a replayed
+assistant message carrying `reasoning_content`. Do **not** port `openai-compat-sanitizer.ts`.
+`requiresReasoningContentOnAssistantMessages` stays unset — replay already works.
+
+`mimo-v2.5` emits `reasoning_content` in responses even though its `/models` entry declares no
+`reasoning` object. Keep the catalog honest to `/models` (`reasoning: false`, thinking level `off` only)
+and record the inconsistency in that entry's `notes`.
+
+### thinkingLevelMap: DERIVED PER MODEL (the core improvement)
+
+Pi levels: `off | minimal | low | medium | high | xhigh | max`. Verboo effort values may include
+`none`, which is **not** a Pi level. Rule: a Pi level maps to the Verboo effort of the same name when
+declared, otherwise `null` (unsupported); `off` maps to `"none"` only when `none` is declared.
+`xhigh`/`max` require a defined entry to be offered by pi-ai at all.
+
+| model | Verboo effort_levels | resulting Pi-supported levels |
+| --- | --- | --- |
+| deepseek-v4-flash | high, max | high, max |
+| deepseek-v4-flash-0731 | low, medium, high, xhigh, max | low, medium, high, xhigh, max |
+| deepseek-v4.1-flash | low, high, xhigh, max | low, high, xhigh, max |
+| glm-5.3-flash | low, high, max | low, high, max |
+| mimo-v2.5 | (none declared) | off |
+| qwen3.8-27b | low, medium, xhigh, none | off, low, medium, xhigh |
+
+`off → "none"` only for qwen3.8-27b. For every other model `off → null` (Verboo declares no way to
+disable reasoning there), so Pi's clamp walks up to `high` — which matches Verboo's own
+`default_effort` for those models.
+
+### maxTokens policy
+
+Verboo never publishes the output cap. Probe measured the safe envelope: `262144` accepted on all
+1M-context models, rejected upstream with `502 {"error":"upstream unavailable"}` on `qwen3.8-27b`
+whose context is `262144`; `131072` accepted there. Ship a conservative `65536` default — the value
+the user's working OpenCode config already uses — and record the measured headroom in `notes`.
+`models.json` `modelOverrides` remains the escape hatch. Never present 65536 as a published cap.
+
+`cost` is `{0,0,0,0}`: Verboo publishes no pricing in `/models`. Recorded as unknown, never invented.
 
 ### Error classifier (src/verboo-errors.ts)
 
@@ -109,9 +152,10 @@ model window for the generic-`400` case; never mislabel an unrelated error.
 
 - [ ] T1 — Scaffolding: `package.json`, `tsconfig.json`, `bunfig.toml`, `.gitignore`, `LICENSE`.
       Route: inline (mechanical, no research).
-- [ ] T2 — Probe: `scripts/probe-verboo.ts` measuring stream_options acceptance, reasoning_effort
+- [x] T2 — Probe: `scripts/probe-verboo.ts` measuring stream_options acceptance, reasoning_effort
       values (incl. `none`/`xhigh`/`max`), unknown-field rejection, `developer` role, empty `tools`,
-      output-token cap. Emits `scripts/probe-report.json`. Route: delegated (write + live verification).
+      output-token cap. Emits `scripts/probe-report.json`. Route: inline (one file + bounded live
+      verification; its results are the evidence T3/T4/T7 depend on).
 - [ ] T3 — `src/thinking-levels.ts`: exact per-model `ThinkingLevelMap`, unsupported ⇒ `null`,
       `off` mapped to Verboo `none` only where that effort is accepted. Route: delegated.
 - [ ] T4 — `src/catalog.ts` + `scripts/generate-catalog.ts` + `manual-overrides.ts` +
@@ -144,12 +188,23 @@ model window for the generic-`400` case; never mislabel an unrelated error.
 ## Progress
 
 - Created branch `feat/verboo-provider`. Research complete: Pi 0.87.1 extension API mapped,
-  reference repo mapped, Verboo live catalog + docs captured. No source written yet.
+  reference repo mapped, Verboo live catalog + docs captured. Task document committed.
+- T2 (probe) done inline: `scripts/probe-verboo.ts` written and run against the live API;
+  `scripts/probe-report.json` committed as evidence. Findings folded into the Design section above.
+  Consequence: the sanitizer is dropped, `supportsUsageInStreaming`/`supportsFinishReason` are true,
+  and the `maxTokens` policy is settled.
 
 ## Verification evidence
 
-- Pending.
+- `scripts/probe-report.json` — 8 behavior probes + per-model output-cap probes against
+  `https://code.verboo.ai/router/v1`, all recorded with status and response body.
+- Live `/models` returns 6 models with `context_window`, `vision`, `reasoning.effort_levels`.
+  It does **not** return `display_name`, output cap, or pricing.
+- Streaming tail check: `usage` and `finish_reason` present with and without
+  `stream_options: { include_usage: true }`.
+- `bun run typecheck` / `bun test` — pending (T1, T8).
 
 ## Next step
 
-T1 scaffolding, then T2 probe (its output feeds T3/T4/T7).
+T1 scaffolding, then T3 (thinking-levels) → T4 (catalog) → T5 (errors) → T6 (loader) → T7 (factory +
+entry) → T8 (tests) → T9 (README + verification).

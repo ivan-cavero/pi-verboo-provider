@@ -1,0 +1,326 @@
+{
+  "source": "https://code.verboo.ai/router/v1/chat/completions",
+  "probedAt": "2026-09-25T08:36:38.491Z",
+  "modelIds": [
+    "deepseek-v4-flash",
+    "deepseek-v4-flash-0731",
+    "deepseek-v4.1-flash",
+    "glm-5.3-flash",
+    "mimo-v2.5",
+    "qwen3.8-27b"
+  ],
+  "behavior": [
+    {
+      "name": "baseline",
+      "model": "deepseek-v4-flash",
+      "request": {
+        "model": "deepseek-v4-flash",
+        "messages": [
+          {
+            "role": "user",
+            "content": "ping"
+          }
+        ],
+        "max_tokens": 1
+      },
+      "status": 200,
+      "ok": true,
+      "observed": "{\"choices\":[{\"finish_reason\":\"length\",\"index\":0,\"logprobs\":null,\"message\":{\"content\":\"\",\"reasoning_content\":\"The user just said \\\"ping\\\". This is a\",\"role\":\"assistant\"}}],\"created\":1790325362,\"id\":\"chatcmpl-5084d201256e19c388fb6419b56a2bdc\",\"model\":\"deepseek-v4-flash\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":10,\"completion_tokens_details\":{\"reasoning_tokens\":10},\"prompt_tokens\":31,\"…"
+    },
+    {
+      "name": "stream_usage",
+      "model": "deepseek-v4-flash",
+      "request": {
+        "model": "deepseek-v4-flash",
+        "messages": [
+          {
+            "role": "user",
+            "content": "ping"
+          }
+        ],
+        "max_tokens": 1,
+        "stream": true,
+        "stream_options": {
+          "include_usage": true
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "observed": "data: {\"choices\":[{\"delta\":{\"role\":\"assistant\"},\"index\":0}],\"created\":1790325364,\"id\":\"chatcmpl-5362406e7ef0e770013a1b127645fed1\",\"model\":\"deepseek-v4-flash\",\"object\":\"chat.completion.chunk\"} data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"We\",\"role\":\"assistant\"},\"index\":0}],\"created\":1790325364,\"id\":\"chatcmpl-5362406e7ef0e770013a1b127645fed1\",\"model\":\"deepseek-v4-flash\",\"object\":\"chat.completion…"
+    },
+    {
+      "name": "stream_without_usage_option",
+      "model": "deepseek-v4-flash",
+      "request": {
+        "model": "deepseek-v4-flash",
+        "messages": [
+          {
+            "role": "user",
+            "content": "ping"
+          }
+        ],
+        "max_tokens": 1,
+        "stream": true
+      },
+      "status": 200,
+      "ok": true,
+      "observed": "data: {\"choices\":[{\"delta\":{\"content\":\"\",\"reasoning_content\":\"\",\"role\":\"assistant\"},\"index\":0}],\"created\":1790325366,\"id\":\"chatcmpl-8c11c85e8590d01ca6bad048aa0a43b4\",\"model\":\"deepseek-v4-flash\",\"object\":\"chat.completion.chunk\",\"usage\":null} data: {\"choices\":[{\"delta\":{\"content\":\"\",\"reasoning_content\":\"The\",\"role\":\"assistant\"},\"index\":0}],\"created\":1790325366,\"id\":\"chatcmpl-8c11c85e8590d01ca6bad048…"
+    },
+    {
+      "name": "developer_role",
+      "model": "deepseek-v4-flash",
+      "request": {
+        "model": "deepseek-v4-flash",
+        "messages": [
+          {
+            "role": "developer",
+            "content": "be terse"
+          },
+          {
+            "role": "user",
+            "content": "ping"
+          }
+        ],
+        "max_tokens": 1
+      },
+      "status": 200,
+      "ok": true,
+      "observed": "{\"choices\":[{\"finish_reason\":\"length\",\"index\":0,\"logprobs\":null,\"message\":{\"content\":\"\",\"reasoning_content\":\"The user just said \\\"ping\\\". This is a\",\"role\":\"assistant\"}}],\"created\":1790325368,\"id\":\"chatcmpl-e82cd5276ed1161b2a14dc16bb37d34c\",\"model\":\"deepseek-v4-flash\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":10,\"completion_tokens_details\":{\"reasoning_tokens\":10},\"prompt_tokens\":34,\"…"
+    },
+    {
+      "name": "tools_empty",
+      "model": "deepseek-v4-flash",
+      "request": {
+        "model": "deepseek-v4-flash",
+        "messages": [
+          {
+            "role": "user",
+            "content": "ping"
+          }
+        ],
+        "max_tokens": 1,
+        "tools": []
+      },
+      "status": 200,
+      "ok": true,
+      "observed": "{\"choices\":[{\"finish_reason\":\"length\",\"index\":0,\"logprobs\":null,\"message\":{\"content\":\"\",\"reasoning_content\":\"The user just said \\\"ping\\\". This is a\",\"role\":\"assistant\"}}],\"created\":1790325369,\"id\":\"chatcmpl-5b756d0799279c771d9bf1901a6dea06\",\"model\":\"deepseek-v4-flash\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":10,\"completion_tokens_details\":{\"reasoning_tokens\":10},\"prompt_tokens\":31,\"…"
+    },
+    {
+      "name": "unknown_fields",
+      "model": "deepseek-v4-flash",
+      "request": {
+        "model": "deepseek-v4-flash",
+        "messages": [
+          {
+            "role": "user",
+            "content": "ping"
+          }
+        ],
+        "max_tokens": 1,
+        "store": false,
+        "reasoning_details": [],
+        "made_up_field_for_probe": true
+      },
+      "status": 200,
+      "ok": true,
+      "observed": "{\"choices\":[{\"finish_reason\":\"length\",\"index\":0,\"logprobs\":null,\"message\":{\"content\":\"\",\"reasoning_content\":\"The user just said \\\"ping\\\". This is a\",\"role\":\"assistant\"}}],\"created\":1790325371,\"id\":\"chatcmpl-0a2bdc29ad4f0cbd080ee53b650a4d37\",\"model\":\"deepseek-v4-flash\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":10,\"completion_tokens_details\":{\"reasoning_tokens\":10},\"prompt_tokens\":31,\"…"
+    },
+    {
+      "name": "reasoning_effort_max",
+      "model": "deepseek-v4-flash",
+      "request": {
+        "model": "deepseek-v4-flash",
+        "messages": [
+          {
+            "role": "user",
+            "content": "ping"
+          }
+        ],
+        "max_tokens": 1,
+        "reasoning_effort": "max"
+      },
+      "status": 200,
+      "ok": true,
+      "observed": "{\"choices\":[{\"finish_reason\":\"length\",\"index\":0,\"logprobs\":null,\"message\":{\"content\":\"\",\"reasoning_content\":\"The user just said \\\"ping\\\". This is a\",\"role\":\"assistant\"}}],\"created\":1790325372,\"id\":\"chatcmpl-0d77ecaa9335cbf3676460e28e795ba3\",\"model\":\"deepseek-v4-flash\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":10,\"completion_tokens_details\":{\"reasoning_tokens\":10},\"prompt_tokens\":31,\"…"
+    },
+    {
+      "name": "replay_reasoning_content",
+      "model": "deepseek-v4-flash",
+      "request": {
+        "model": "deepseek-v4-flash",
+        "messages": [
+          {
+            "role": "assistant",
+            "content": "a",
+            "reasoning_content": "prior private reasoning"
+          },
+          {
+            "role": "user",
+            "content": "ping"
+          }
+        ],
+        "max_tokens": 1
+      },
+      "status": 200,
+      "ok": true,
+      "observed": "{\"choices\":[{\"finish_reason\":\"length\",\"index\":0,\"logprobs\":null,\"message\":{\"content\":\"\",\"reasoning_content\":\"We need answer to user \\\"ping\\\". Likely\",\"role\":\"assistant\"}}],\"created\":1790325374,\"id\":\"chatcmpl-be181d695c32dff69fb19b8043443838\",\"model\":\"deepseek-v4-flash\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":10,\"completion_tokens_details\":{\"reasoning_tokens\":10},\"prompt_tokens\":35,…"
+    }
+  ],
+  "outputCaps": [
+    {
+      "model": "deepseek-v4-flash",
+      "acceptedMaxTokens": 262144,
+      "probes": [
+        {
+          "name": "max_tokens_262144",
+          "model": "deepseek-v4-flash",
+          "request": {
+            "model": "deepseek-v4-flash",
+            "messages": [
+              {
+                "role": "user",
+                "content": "ping"
+              }
+            ],
+            "max_tokens": 262144
+          },
+          "status": 200,
+          "ok": true,
+          "observed": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"logprobs\":null,\"message\":{\"content\":\"pong\",\"reasoning_content\":\"The user just said \\\"ping\\\". This is a2a protocol. I should respond with \\\"pong\\\" or something similar. It's a simple connectivity check. I should respond briefly.\\n\\nActually, let me think about what the right response is for the A2A protocol. Typically, \\\"ping\\\" is a health check. The a…"
+        }
+      ]
+    },
+    {
+      "model": "deepseek-v4-flash-0731",
+      "acceptedMaxTokens": 262144,
+      "probes": [
+        {
+          "name": "max_tokens_262144",
+          "model": "deepseek-v4-flash-0731",
+          "request": {
+            "model": "deepseek-v4-flash-0731",
+            "messages": [
+              {
+                "role": "user",
+                "content": "ping"
+              }
+            ],
+            "max_tokens": 262144
+          },
+          "status": 200,
+          "ok": true,
+          "observed": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"logprobs\":null,\"message\":{\"content\":\"pong 🏓\\n\\nWhat can I help you with?\",\"reasoning_content\":\"The user just said \\\"ping\\\". This is aDS a simple connectivity check. I should respond briefly and naturally, like \\\"pong\\\" — and offer help.\",\"role\":\"assistant\"}}],\"created\":1790325378,\"id\":\"chatcmpl-dfdeace4ec4e64b8bb1797cfeb1a97d1\",\"model\":\"deepseek-v4-f…"
+        }
+      ]
+    },
+    {
+      "model": "deepseek-v4.1-flash",
+      "acceptedMaxTokens": 262144,
+      "probes": [
+        {
+          "name": "max_tokens_262144",
+          "model": "deepseek-v4.1-flash",
+          "request": {
+            "model": "deepseek-v4.1-flash",
+            "messages": [
+              {
+                "role": "user",
+                "content": "ping"
+              }
+            ],
+            "max_tokens": 262144
+          },
+          "status": 200,
+          "ok": true,
+          "observed": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"logprobs\":null,\"message\":{\"content\":\"pong 🏓\\n\\nWhat can I help you with?\",\"reasoning_content\":\"The user just said \\\"ping\\\". This is a2ui... no, it's just a simple ping. I should respond briefly and naturally — \\\"pong\\\" is the classic response. Keep it short and offer help.\",\"role\":\"assistant\"}}],\"created\":1790325382,\"id\":\"chatcmpl-c9c4cdf8eb2bd49b9cf…"
+        }
+      ]
+    },
+    {
+      "model": "glm-5.3-flash",
+      "acceptedMaxTokens": 262144,
+      "probes": [
+        {
+          "name": "max_tokens_262144",
+          "model": "glm-5.3-flash",
+          "request": {
+            "model": "glm-5.3-flash",
+            "messages": [
+              {
+                "role": "user",
+                "content": "ping"
+              }
+            ],
+            "max_tokens": 262144
+          },
+          "status": 200,
+          "ok": true,
+          "observed": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"content\":\"pong\",\"reasoning_content\":\"The user typed \\\"ping\\\". This is likely a connectivity test. Respond simply, like \\\"pong\\\". No need for brackets or anything.\",\"role\":\"assistant\"}}],\"created\":1790325387,\"id\":\"chatcmpl-4b31270b0f8a252c7c63fb3d5f4556ea\",\"model\":\"glm-5.3-flash\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":30,\"co…"
+        }
+      ]
+    },
+    {
+      "model": "mimo-v2.5",
+      "acceptedMaxTokens": 262144,
+      "probes": [
+        {
+          "name": "max_tokens_262144",
+          "model": "mimo-v2.5",
+          "request": {
+            "model": "mimo-v2.5",
+            "messages": [
+              {
+                "role": "user",
+                "content": "ping"
+              }
+            ],
+            "max_tokens": 262144
+          },
+          "status": 200,
+          "ok": true,
+          "observed": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"content\":\"Pong! 👋\\n\\nHow can I help you today?\",\"reasoning_content\":\"The user just said \\\"ping\\\". This is a simple network connectivity test command or a casual greeting. I should respond appropriately. Since there's no specific task or question, I'll acknowledge it and ask how I can help.\",\"role\":\"assistant\"}}],\"created\":1790325390,\"id\":\"…"
+        }
+      ]
+    },
+    {
+      "model": "qwen3.8-27b",
+      "acceptedMaxTokens": 131072,
+      "probes": [
+        {
+          "name": "max_tokens_262144",
+          "model": "qwen3.8-27b",
+          "request": {
+            "model": "qwen3.8-27b",
+            "messages": [
+              {
+                "role": "user",
+                "content": "ping"
+              }
+            ],
+            "max_tokens": 262144
+          },
+          "status": 502,
+          "ok": false,
+          "observed": "{\"error\":\"upstream unavailable\"}"
+        },
+        {
+          "name": "max_tokens_131072",
+          "model": "qwen3.8-27b",
+          "request": {
+            "model": "qwen3.8-27b",
+            "messages": [
+              {
+                "role": "user",
+                "content": "ping"
+              }
+            ],
+            "max_tokens": 131072
+          },
+          "status": 200,
+          "ok": true,
+          "observed": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"logprobs\":null,\"matched_stop\":248046,\"message\":{\"content\":\"\\n\\npong\",\"reasoning_content\":\"We need respond to user \\\"ping\\\". Need final likely \\\"pong\\\". Simple.\\n\",\"role\":\"assistant\",\"tool_calls\":null}}],\"created\":1790325396,\"id\":\"7c9b9cd6738c4f66a597108d9a7ed1d2\",\"metadata\":{\"weight_version\":\"default\",\"weight_versions\":[{\"end\":21,\"start\":0,\"version\":\"…"
+        }
+      ]
+    }
+  ]
+}
