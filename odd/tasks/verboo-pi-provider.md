@@ -351,3 +351,39 @@ published later via npm.
 - npm publish is **blocked on credentials**: `npm whoami` → `ENEEDAUTH` (no `~/.npmrc`), and the
   `@ivancavero` scope/package do not exist on the registry yet (`npm view` → 404). Nothing was
   published; the README documents the maintainer steps instead.
+
+## Work unit: authentication docs + model-list baseline reframe (2026-09-25)
+
+The package is now published as `@ivancavero/pi-verboo-provider@0.1.0` (public) and listed in the Pi
+gallery, so the "blocked on credentials / not published" state above is resolved. Both READMEs were
+corrected and kept in sync; `src/`, `test/` and `scripts/` were not touched.
+
+- `588e78c` — `docs(readme): clarify authentication and reframe the model list as a baseline`
+  (`README.md`, `README.es.md`).
+  - **Install**: npm command is now the primary/official path; the git source is the no-npm
+    alternative; `-l` shown with the npm source; one-liners kept; the `VERBOO_PI_SOURCE` note is
+    reworded (installers prefer npm, fall back to git) instead of "while unpublished".
+  - **New `Authenticate` / `Autenticación` section right after Install**: states the provider must be
+    authenticated before any model appears, quotes the observed `No models available. Use /login to
+    log into a provider via OAuth or API key.` output, documents the `/login verboo` in-pi flow step
+    by step as the persistent path, the `VERBOO_API_KEY` env-var alternative and where it must be
+    set, and precedence (stored credential wins; an empty env var does not count).
+  - **Usage flow fixed**: install → authenticate → `pi --list-models verboo` → `/model`; the stale
+    `# expected: 6 models` line is gone and the no-auth output is stated.
+  - **Models reframed**: the table is explicitly the **bundled baseline / example**; the live list is
+    authoritative via `GET /models` and depends on account/plan/role, so it may differ. Per-model
+    thinking levels, the `deepseek-v4.1-flash` vision note, the `mimo-v2.5` note and the `maxTokens`
+    caveat are unchanged.
+  - **Maintainer: publishing** updated: records the 0.1.0 publish and documents a future release
+    (bump version → `npm login` → `npm publish --access public`, gallery via `pi-package`).
+  - The now-duplicated standalone `Auth` / `Autenticación` section was removed; its precedence table
+    moved into the new `Authenticate` section, so no accurate content was lost.
+
+### Verification
+
+- `bun run typecheck` — exit 0.
+- `bun test` — 74 pass / 0 fail, 276 expect() calls, 8 files.
+- Stale-text grep (`not published`, `unpublished`, `once the npm package is published`,
+  `expected: 6 models`, plus the Spanish `esté publicado` / `no está publicado`) — no matches.
+- Both READMEs mention `/login verboo` (5 occurrences each), state the authentication requirement,
+  and label the model table as a bundled baseline / example.
