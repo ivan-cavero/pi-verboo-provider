@@ -160,10 +160,10 @@ model window for the generic-`400` case; never mislabel an unrelated error.
       `off` mapped to Verboo `none` only where that effort is accepted. Route: delegated.
 - [x] T4 — `src/catalog.ts` + `scripts/generate-catalog.ts` + `manual-overrides.ts` +
       `src/catalog.generated.ts`. Route: delegated.
-- [ ] T5 — `src/verboo-errors.ts`. Route: delegated.
-- [ ] T6 — `src/pi-ai-loader.ts` (compact port of the reference, host-anchored, loud failure).
+- [x] T5 — `src/verboo-errors.ts`. Route: delegated.
+- [x] T6 — `src/pi-ai-loader.ts` (compact port of the reference, host-anchored, loud failure).
       Route: delegated.
-- [ ] T7 — `src/providers.ts`, `src/provider-factory.ts`, `src/index.ts`. Route: delegated.
+- [x] T7 — `src/providers.ts`, `src/provider-factory.ts`, `src/index.ts`. Route: delegated.
 - [ ] T8 — Tests: network guard + thinking-levels + catalog merge + error classifier +
       extension-load contract + one integration turn against a mock SSE gateway. Route: delegated.
 - [ ] T9 — README + verification (`bun run typecheck`, `bun test`, `pi --list-models verboo` smoke).
@@ -174,6 +174,9 @@ model window for the generic-`400` case; never mislabel an unrelated error.
 - `0fc6e9b` — `chore(scaffold): bootstrap pi-verboo-provider package` (T1)
 - `bd60394` — `feat(thinking-levels): derive per-model pi thinking levels from Verboo efforts` (T3)
 - `c9f39d0` — `feat(catalog): add Verboo catalog with live merge and generated snapshot` (T4)
+- `bc95e66` — `feat(errors): classify documented Verboo errors into pi-actionable messages` (T5)
+- `c0c2a99` — `feat(loader): resolve the host pi-ai openai-completions factory` (T6)
+- `97d49f4` — `feat(provider): register Verboo Code via the shared pi-ai factory` (T7)
 
 ## Acceptance criteria
 
@@ -207,6 +210,17 @@ model window for the generic-`400` case; never mislabel an unrelated error.
 - T4 (catalog) done: tolerant live-capability parser + generated snapshot produced by
   `scripts/generate-catalog.ts`. Regeneration is byte-for-byte idempotent (it preserves `fetchedAt`
   when the payload is unchanged) and fails loudly on a missing key or a failed/empty live fetch.
+- T5 (errors) done: pure `classifyVerbooError` + `withVerbooErrorClassification`. Overflow emits
+  pi's recognized phrase (400 only when over-window; 413 always), terms surfaces acceptUrl/version,
+  access/balance/model name cause and fix, 429 mentions Retry-After, 500/502/503 transient, and a
+  non-overflow 400 returns `undefined` (never mislabelled).
+- T6 (loader) done: host-anchored resolution of `openAICompletionsApi`; bare root first, then file
+  URLs derived from `process.argv[1]`'s package root, with a same-package directory guard and a
+  loud typed `PiAiStreamingApiResolutionError`. `PiAiLoaderHost` seam preserved.
+- T7 (provider) done: `VERBOO_PROVIDER`/`PROVIDERS`, `createVerbooProvider` (envApiKeyAuth +
+  generated baseline + live fetchModels/filterModels + error-classified api), and the default-export
+  extension with a warned legacy fallback. `piAi.envApiKeyAuth` is exported by pi-ai 0.87.1, so no
+  local auth equivalent was needed.
 
 ## Verification evidence
 
@@ -216,8 +230,16 @@ model window for the generic-`400` case; never mislabel an unrelated error.
   It does **not** return `display_name`, output cap, or pricing.
 - Streaming tail check: `usage` and `finish_reason` present with and without
   `stream_options: { include_usage: true }`.
-- `bun run typecheck` / `bun test` — `bun run typecheck` (`bunx tsc --noEmit`) exits 0 on T1+T3+T4.
-  `bun test` still pending (T8).
+- `bun run typecheck` / `bun test` — `bun run typecheck` (`bunx tsc --noEmit`) exits 0 on
+  T1+T3+T4+T5+T6+T7. `bun test` still pending (T8).
+- No-network runtime smoke (`bun -e`, `createVerbooProvider` + `getModels()`): observed
+  `6 deepseek-v4-flash:map,deepseek-v4-flash-0731:map,deepseek-v4.1-flash:map,glm-5.3-flash:map,mimo-v2.5:nomap,qwen3.8-27b:map`.
+  No fetch is performed.
+- pi-ai 0.87.1 runtime exports: `envApiKeyAuth`, `createProvider` are functions on the bare root;
+  `openAICompletionsApi` is NOT (the loader's host-anchored fallback loads it), so the factory's
+  `envApiKeyAuth` path is used directly — no local auth equivalent.
+- `ExtensionAPI` and `ProviderConfig` type imports resolve from the `@earendil-works/pi-coding-agent`
+  root (`dist/index.d.ts`, re-exported from `core/extensions/types.ts`).
 - `bun install` — resolved `@earendil-works/pi-ai@0.87.1` and
   `@earendil-works/pi-coding-agent@0.87.1` from npm; `bun.lock` committed. No faking needed.
 - `bun run generate-catalog` (with `VERBOO_API_KEY`) — fetched the 6 live models and wrote
@@ -226,5 +248,5 @@ model window for the generic-`400` case; never mislabel an unrelated error.
 
 ## Next step
 
-T1 scaffolding, then T3 (thinking-levels) → T4 (catalog) → T5 (errors) → T6 (loader) → T7 (factory +
-entry) → T8 (tests) → T9 (README + verification).
+T8 (tests: network guard + thinking-levels + catalog merge + error classifier + extension-load
+contract + mock-SSE integration turn) → T9 (README + verification).
