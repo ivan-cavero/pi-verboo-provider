@@ -202,16 +202,22 @@ function parseLiveRow(row: unknown): LiveModelCapability | undefined {
 	return capability;
 }
 
+export interface LiveModelsSnapshot {
+	/** Raw rows exactly as received from `/models`, for auditable provenance. */
+	rawRows: unknown[];
+	/** Parsed, de-duplicated, order-preserving capability rows. */
+	capabilities: LiveModelCapability[];
+}
+
 /**
- * Fetch and parse live model capabilities from `{baseUrl}/models`.
- *
+ * Fetch `/models` and return BOTH the parsed capabilities and the raw rows
+ * exactly as received, so a generator can persist an auditable snapshot.
  * Returns `undefined` on any failure — non-OK status, timeout, malformed or
- * empty body — so callers fall back to the generated catalog instead of
- * failing startup. Rows are de-duplicated and order-preserving.
+ * empty body — with the same fallback contract as {@link listLiveModels}.
  */
-export async function listLiveModels(
+export async function fetchLiveModelsSnapshot(
 	options: LiveModelListOptions,
-): Promise<LiveModelCapability[] | undefined> {
+): Promise<LiveModelsSnapshot | undefined> {
 	const { baseUrl, apiKey, timeoutMs = DEFAULT_MODELS_TIMEOUT_MS, fetchImpl = fetch } = options;
 
 	const url = `${baseUrl.replace(/\/+$/, "")}/models`;
@@ -239,12 +245,26 @@ export async function listLiveModels(
 
 		// An empty live list is indistinguishable from "endpoint unusable":
 		// prefer the generated catalog over an empty registration.
-		return capabilities.length > 0 ? capabilities : undefined;
+		if (capabilities.length === 0) return undefined;
+		return { rawRows: rows, capabilities };
 	} catch {
 		return undefined;
 	} finally {
 		clearTimeout(timeoutId);
 	}
+}
+
+/**
+ * Fetch and parse live model capabilities from `{baseUrl}/models`.
+ *
+ * Returns `undefined` on any failure — non-OK status, timeout, malformed or
+ * empty body — so callers fall back to the generated catalog instead of
+ * failing startup. Rows are de-duplicated and order-preserving.
+ */
+export async function listLiveModels(
+	options: LiveModelListOptions,
+): Promise<LiveModelCapability[] | undefined> {
+	return (await fetchLiveModelsSnapshot(options))?.capabilities;
 }
 
 /**
@@ -254,8 +274,14 @@ export async function listLiveModels(
  * output cap (the conservative envelope is recorded in `notes`).
  */
 export function entryFromLiveCapability(capability: LiveModelCapability): GeneratedModelEntry {
-	const reasoning = capability.reasoning !== undefined;
-	const map = reasoning ? thinkingLevelMapFromEfforts(capability.reasoning?.effortLevels) : undefined;
+	// `reasoning` must reflect a USABLE effort list, not merely the presence of a
+	// `reasoning` object. pi-ai treats an omitted `thinkingLevelMap` key as
+	// SUPPORTED for every level except `xhigh`/`max`, so a live model that
+	// declares `reasoning` but no `effort_levels` would otherwise be offered
+	// levels Verboo does not accept. No efforts => reasoning false, off only
+	// (conservative, honest).
+	const map = thinkingLevelMapFromEfforts(capability.reasoning?.effortLevels);
+	const reasoning = map !== undefined;
 
 	return {
 		id: capability.id,

@@ -8,6 +8,7 @@ import { describe, expect, test } from "bun:test";
 import {
 	baselineModels,
 	entryFromLiveCapability,
+	fetchLiveModelsSnapshot,
 	listLiveModels,
 	mergeLiveWithGenerated,
 	resolveCatalog,
@@ -140,6 +141,17 @@ describe("listLiveModels", () => {
 		});
 		expect(rows).toBeUndefined();
 	});
+
+	test("the snapshot exposes the raw rows verbatim (provenance)", async () => {
+		const snapshot = await fetchLiveModelsSnapshot({
+			baseUrl: SOURCE.baseUrl,
+			apiKey: "k",
+			fetchImpl: jsonFetch(VERBOO_PAYLOAD),
+		});
+		expect(snapshot).toBeDefined();
+		expect(snapshot!.rawRows).toEqual(VERBOO_PAYLOAD.data);
+		expect(snapshot!.capabilities.map((row) => row.id)).toEqual(["deepseek-v4-flash", "qwen3.8-27b"]);
+	});
 });
 
 describe("mergeLiveWithGenerated", () => {
@@ -185,6 +197,26 @@ describe("mergeLiveWithGenerated", () => {
 		expect(entry.notes).toBeDefined();
 		expect(entry.notes!.some((note) => note.includes("Not present in the generated catalog"))).toBe(true);
 		expect(entry.notes!.some((note) => note.includes(String(UNKNOWN_MODEL_LIMITS.maxTokens)))).toBe(true);
+	});
+
+	test("a reasoning object without effort_levels does not claim reasoning (C2)", () => {
+		// pi-ai treats an omitted thinkingLevelMap key as SUPPORTED, so a live
+		// model with a reasoning object but no usable efforts must be reasoning
+		// false with no map — otherwise pi would offer levels Verboo rejects.
+		const capability = {
+			id: "no-efforts",
+			contextWindow: 10_000,
+			vision: false,
+			reasoning: { defaultEffort: "high" },
+		};
+		const entry = entryFromLiveCapability(capability);
+		expect(entry.reasoning).toBe(false);
+		expect("thinkingLevelMap" in entry).toBe(false);
+
+		const merged = mergeLiveWithGenerated([capability], SOURCE);
+		const model = merged.models[0]!;
+		expect(model.reasoning).toBe(false);
+		expect("thinkingLevelMap" in model).toBe(false);
 	});
 });
 

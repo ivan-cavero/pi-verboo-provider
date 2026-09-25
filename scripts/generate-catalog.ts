@@ -19,6 +19,10 @@
  *   values fall back to the conservative `UNKNOWN_MODEL_LIMITS` with a note.
  * - `thinkingLevelMap` is derived per model from `effort_levels` by
  *   `src/thinking-levels.ts`.
+ * - Every successful run also writes `scripts/models-capabilities.json`: the
+ *   RAW `/models` rows exactly as received (with source URL and fetch time),
+ *   so the `contextWindow`/`vision`/`effort_levels` values in the generated
+ *   catalog are auditable from the repo (acceptance criterion #4).
  *
  * Reproducibility: the generated file records `fetchedAt`. A regeneration
  * reuses the existing `fetchedAt` when the catalog payload is otherwise
@@ -31,7 +35,7 @@
 import {
 	type GeneratedModelEntry,
 	type LiveModelCapability,
-	listLiveModels,
+	fetchLiveModelsSnapshot,
 	UNKNOWN_MODEL_LIMITS,
 	VERBOO_COMPAT,
 } from "../src/catalog.ts";
@@ -41,6 +45,7 @@ import { MANUAL_OVERRIDES } from "./manual-overrides.ts";
 const BASE_URL = "https://code.verboo.ai/router/v1";
 const MODELS_SOURCE = `${BASE_URL}/models`;
 const OUTPUT_PATH = new URL("../src/catalog.generated.ts", import.meta.url).pathname;
+const CAPABILITIES_PATH = new URL("./models-capabilities.json", import.meta.url).pathname;
 const FETCH_TIMEOUT_MS = 15_000;
 const FETCHED_AT_PLACEHOLDER = "__VERBOO_FETCHED_AT__";
 const FETCHED_AT_FIELD_PATTERN = /^(\s*fetchedAt:\s*")([^"]*)(")/m;
@@ -200,22 +205,34 @@ async function main(): Promise<void> {
 	}
 
 	console.log(`Fetching model capabilities from ${MODELS_SOURCE}…`);
-	const live = await listLiveModels({ baseUrl: BASE_URL, apiKey, timeoutMs: FETCH_TIMEOUT_MS });
-	if (!live || live.length === 0) {
+	const snapshot = await fetchLiveModelsSnapshot({ baseUrl: BASE_URL, apiKey, timeoutMs: FETCH_TIMEOUT_MS });
+	if (!snapshot || snapshot.capabilities.length === 0) {
 		fail(
 			`failed to fetch or parse ${MODELS_SOURCE} — refusing to generate a catalog without live capability data.`,
 		);
 	}
 
-	const entries = live.map(buildEntry).sort(byId);
+	const entries = snapshot.capabilities.map(buildEntry).sort(byId);
 	const fetchedAt = await resolveFetchedAt(renderCatalog(entries, FETCHED_AT_PLACEHOLDER));
 	const content = renderCatalog(entries, fetchedAt);
 
 	await Bun.write(OUTPUT_PATH, content);
 
+	// Auditable provenance: persist the raw `/models` rows exactly as received
+	// so every contextWindow/vision/effort_levels value in the catalog can be
+	// checked against the source.
+	const capabilitiesSnapshot = {
+		source: MODELS_SOURCE,
+		fetchedAt,
+		modelCount: snapshot.rawRows.length,
+		models: snapshot.rawRows,
+	};
+	await Bun.write(CAPABILITIES_PATH, `${JSON.stringify(capabilitiesSnapshot, null, 2)}\n`);
+
 	console.log(
 		`Wrote ${OUTPUT_PATH} (${entries.length} models: ${entries.map((entry) => entry.id).join(", ")})`,
 	);
+	console.log(`Wrote ${CAPABILITIES_PATH} (${snapshot.rawRows.length} raw rows)`);
 	console.log(`Fetched at: ${fetchedAt}`);
 }
 
