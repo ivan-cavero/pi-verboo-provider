@@ -90,7 +90,7 @@ else {
 
 Write-Host "Resolved source: $source"
 if (-not $useOverride -and $source -eq $GitSource) {
-	Write-Host 'The npm package is not available (unpublished or npm unavailable); using the git source.'
+	Write-Host 'Could not resolve the npm package (registry unreachable or not published); using the git source instead.'
 }
 
 if (-not (Get-Command pi -ErrorAction SilentlyContinue)) {

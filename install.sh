@@ -64,7 +64,7 @@ resolve_source() {
 SOURCE="$(resolve_source)"
 printf 'Resolved source: %s\n' "$SOURCE"
 if [ -z "${VERBOO_PI_SOURCE:-}" ] && [ "$SOURCE" = "$GIT_SOURCE" ]; then
-	printf 'The npm package is not available (unpublished or npm unavailable); using the git source.\n'
+	printf 'Could not resolve the npm package (registry unreachable or not published); using the git source instead.\n'
 fi
 
 if ! command -v pi >/dev/null 2>&1; then
