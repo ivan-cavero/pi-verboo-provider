@@ -214,11 +214,12 @@ model window for the generic-`400` case; never mislabel an unrelated error.
   when the payload is unchanged) and fails loudly on a missing key or a failed/empty live fetch.
 - T5 (errors) done: pure `classifyVerbooError` + `withVerbooErrorClassification`. Overflow emits
   pi's recognized phrase (400 only when over-window; 413 always), terms surfaces acceptUrl/version,
-  access/balance/model name cause and fix, 429 mentions Retry-After, 500/502/503 transient, and a
-  non-overflow 400 returns `undefined` (never mislabelled).
+  access/balance/model name cause and fix, 429 reports the body's retry delay (no header claim),
+  500/502/503 transient, and a non-overflow 400 returns `undefined` (never mislabelled).
 - T6 (loader) done: host-anchored resolution of `openAICompletionsApi`; bare root first, then file
-  URLs derived from `process.argv[1]`'s package root, with a same-package directory guard and a
-  loud typed `PiAiStreamingApiResolutionError`. `PiAiLoaderHost` seam preserved.
+  URLs derived from the host entrypoint's package root, failing with a loud typed
+  `PiAiStreamingApiResolutionError` that carries the resolved root and attempted URLs.
+  `PiAiLoaderHost` seam preserved.
 - T7 (provider) done: `VERBOO_PROVIDER`/`PROVIDERS`, `createVerbooProvider` (envApiKeyAuth +
   generated baseline + live fetchModels/filterModels + error-classified api), and the default-export
   extension with a warned legacy fallback. `piAi.envApiKeyAuth` is exported by pi-ai 0.87.1, so no
@@ -243,7 +244,7 @@ model window for the generic-`400` case; never mislabel an unrelated error.
 - Streaming tail check: `usage` and `finish_reason` present with and without
   `stream_options: { include_usage: true }`.
 - `bun run typecheck` / `bun test` — `bun run typecheck` (`bunx tsc --noEmit`) exits 0 on all tasks.
-  `bun test`: `68 pass, 0 fail`, 255 expect() calls, 7 files (~0.5s), with the network guard active.
+  `bun test`: `74 pass, 0 fail`, 276 expect() calls, 8 files (~0.5s), with the network guard active.
 - End-to-end acceptance (isolated agent dir, real config untouched):
   `TMP=$(mktemp -d)`; `settings.json` = `{"packages":["/home/dev/dev/pi-verboo-provider"]}`;
   `PI_CODING_AGENT_DIR=$TMP VERBOO_API_KEY=... pi --list-models verboo` listed all 6 models with the
@@ -262,7 +263,47 @@ model window for the generic-`400` case; never mislabel an unrelated error.
   `src/catalog.generated.ts`; a second plain run produced a byte-for-byte identical file (empty diff).
   Missing-key and failed-fetch paths both exit non-zero with a clear refusal message.
 
+## Independent verification (2026-09-25)
+
+An independent verifier reviewed the whole implementation. All findings were addressed in follow-up
+work units:
+
+- **C1 — Capability auditability**: `scripts/generate-catalog.ts` now also writes
+  `scripts/models-capabilities.json` (source URL, `fetchedAt`, the raw `/models` rows exactly as
+  received) on every successful run, so `contextWindow`/`vision`/`effort_levels` in
+  `src/catalog.generated.ts` can be checked from the repo (acceptance criterion #4). The snapshot is
+  committed and a rerun left `src/catalog.generated.ts` byte-identical.
+- **C2 — Live reasoning trap**: `entryFromLiveCapability` derives `reasoning` from a usable
+  `effort_levels` list, not from the presence of a `reasoning` object, so a model without efforts is
+  `reasoning: false` with no `thinkingLevelMap` (pi-ai would otherwise treat omitted keys as
+  supported). Regression test added in `test/catalog.test.ts`.
+- **C3 — Loader typed failure**: the resolver result may be a `file://` URL or a filesystem path;
+  URL derivation is wrapped so a runtime without `import.meta.resolve` raises
+  `PiAiStreamingApiResolutionError` (resolved root + attempted URLs), never a raw `TypeError`. The
+  vacuous `startsWith(rootDir)` comment and the `import.meta.resolve` comment now match the code.
+- **C4 — Network-guard bypass**: `originalFetch` is no longer exported, so the hatch cannot restore
+  real network access; the doc states the guard only routes and that narrowness is the supplied
+  handler's responsibility. `test/network-guard.test.ts` stays green.
+- **C5 — Loader tests**: `test/pi-ai-loader.test.ts` covers branch 1, branch 2, a throwing resolver,
+  and a filesystem-path resolver result via the `PiAiLoaderHost` seam (no network, no writes).
+- **C6 — Dependency hygiene**: `@types/node ^24` added explicitly to `devDependencies`
+  (`import.meta.resolve` is not declared by bun-types).
+- **C7 — Retry-After honesty**: the classifier reads the delay from the JSON body only, so the 429
+  message and the README no longer imply HTTP header handling.
+
+Deferred (recorded, intentionally not changed):
+
+- `filterModels` does not prune on the stored-models/cache-only path (`liveIds` unset) — cosmetic;
+  the generated baseline still shows.
+- `estimateRequestTokens` counts base64 image data and tool schemas — the documented chars/3.47
+  heuristic.
+- No hard rejection of extension-relative resolution when `import.meta.resolve` ignores its `parent`
+  argument — accurate comments and typed errors only, so a working load is never broken.
+
+New/changed evidence paths: `scripts/models-capabilities.json`, `test/pi-ai-loader.test.ts`.
+
 ## Next step
 
-All tasks T1–T9 are complete and verified. Remaining work is release prep (not in scope): publish to
-npm, add CI, and a Spanish README if desired.
+All tasks T1–T9 are complete, verified, and independently reviewed; corrections C1–C7 are applied and
+the deferred items above are recorded. Remaining work is release prep (not in scope): publish to npm,
+add CI, and a Spanish README if desired.
