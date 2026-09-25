@@ -246,7 +246,7 @@ model window for the generic-`400` case; never mislabel an unrelated error.
 - `bun run typecheck` / `bun test` — `bun run typecheck` (`bunx tsc --noEmit`) exits 0 on all tasks.
   `bun test`: `74 pass, 0 fail`, 276 expect() calls, 8 files (~0.5s), with the network guard active.
 - End-to-end acceptance (isolated agent dir, real config untouched):
-  `TMP=$(mktemp -d)`; `settings.json` = `{"packages":["/home/dev/dev/pi-verboo-provider"]}`;
+  `TMP=$(mktemp -d)`; `settings.json` = `{"packages":["<absolute repo path>"]}`;
   `PI_CODING_AGENT_DIR=$TMP VERBOO_API_KEY=... pi --list-models verboo` listed all 6 models with the
   expected context/max-out/thinking/images columns (exit 0).
 - No-network runtime smoke (`bun -e`, `createVerbooProvider` + `getModels()`): observed
