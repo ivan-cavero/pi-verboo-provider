@@ -307,3 +307,5 @@ New/changed evidence paths: `scripts/models-capabilities.json`, `test/pi-ai-load
 All tasks T1–T9 are complete, verified, and independently reviewed; corrections C1–C7 are applied and
 the deferred items above are recorded. Remaining work is release prep (not in scope): publish to npm,
 add CI, and a Spanish README if desired.
+
+- `README.es.md` added (Spanish translation of `README.md`, linked from both files) — commit `adb32c4`.
