@@ -164,9 +164,9 @@ model window for the generic-`400` case; never mislabel an unrelated error.
 - [x] T6 — `src/pi-ai-loader.ts` (compact port of the reference, host-anchored, loud failure).
       Route: delegated.
 - [x] T7 — `src/providers.ts`, `src/provider-factory.ts`, `src/index.ts`. Route: delegated.
-- [ ] T8 — Tests: network guard + thinking-levels + catalog merge + error classifier +
+- [x] T8 — Tests: network guard + thinking-levels + catalog merge + error classifier +
       extension-load contract + one integration turn against a mock SSE gateway. Route: delegated.
-- [ ] T9 — README + verification (`bun run typecheck`, `bun test`, `pi --list-models verboo` smoke).
+- [x] T9 — README + verification (`bun run typecheck`, `bun test`, `pi --list-models verboo` smoke).
       Route: delegated (docs) + parent spot check.
 
 ## Work units
@@ -177,6 +177,8 @@ model window for the generic-`400` case; never mislabel an unrelated error.
 - `bc95e66` — `feat(errors): classify documented Verboo errors into pi-actionable messages` (T5)
 - `c0c2a99` — `feat(loader): resolve the host pi-ai openai-completions factory` (T6)
 - `97d49f4` — `feat(provider): register Verboo Code via the shared pi-ai factory` (T7)
+- `2aff867` — `test(suite): cover catalog, thinking levels, errors, provider, extension load and a mock-SSE turn` (T8)
+- `d9114fd` — `docs(readme): document install, models, thinking levels, errors and provenance` (T9)
 
 ## Acceptance criteria
 
@@ -221,6 +223,16 @@ model window for the generic-`400` case; never mislabel an unrelated error.
   generated baseline + live fetchModels/filterModels + error-classified api), and the default-export
   extension with a warned legacy fallback. `piAi.envApiKeyAuth` is exported by pi-ai 0.87.1, so no
   local auth equivalent was needed.
+- T8 (tests) done: 7 files / 68 tests, no network. The network guard gained an explicit
+  `installMockFetch`/`restoreNetworkGuard` hatch that still refuses non-mocked URLs. Coverage:
+  thinking-level table + explicit-null regression, catalog parse/merge/fallback, error taxonomy +
+  `result()`/iteration Proxy agreement, auth precedence + `filterModels`, extension registration
+  (native + warned legacy fallback + pi-ai subpath scan), and a real pi-ai `openai-completions` turn
+  against a mock SSE gateway (reasoning blocks, usage, finish_reason, over-window 400 overflow).
+- T9 (README + acceptance) done: English README with quick path, model table, `maxTokens` caveat,
+  auth, thinking-level behavior, error taxonomy, `models.json` `modelOverrides` example, development
+  and provenance. Isolated `PI_CODING_AGENT_DIR` acceptance listed all 6 models; the real
+  `~/.pi/agent/settings.json` was never touched.
 
 ## Verification evidence
 
@@ -230,8 +242,12 @@ model window for the generic-`400` case; never mislabel an unrelated error.
   It does **not** return `display_name`, output cap, or pricing.
 - Streaming tail check: `usage` and `finish_reason` present with and without
   `stream_options: { include_usage: true }`.
-- `bun run typecheck` / `bun test` — `bun run typecheck` (`bunx tsc --noEmit`) exits 0 on
-  T1+T3+T4+T5+T6+T7. `bun test` still pending (T8).
+- `bun run typecheck` / `bun test` — `bun run typecheck` (`bunx tsc --noEmit`) exits 0 on all tasks.
+  `bun test`: `68 pass, 0 fail`, 255 expect() calls, 7 files (~0.5s), with the network guard active.
+- End-to-end acceptance (isolated agent dir, real config untouched):
+  `TMP=$(mktemp -d)`; `settings.json` = `{"packages":["/home/dev/dev/pi-verboo-provider"]}`;
+  `PI_CODING_AGENT_DIR=$TMP VERBOO_API_KEY=... pi --list-models verboo` listed all 6 models with the
+  expected context/max-out/thinking/images columns (exit 0).
 - No-network runtime smoke (`bun -e`, `createVerbooProvider` + `getModels()`): observed
   `6 deepseek-v4-flash:map,deepseek-v4-flash-0731:map,deepseek-v4.1-flash:map,glm-5.3-flash:map,mimo-v2.5:nomap,qwen3.8-27b:map`.
   No fetch is performed.
@@ -248,5 +264,5 @@ model window for the generic-`400` case; never mislabel an unrelated error.
 
 ## Next step
 
-T8 (tests: network guard + thinking-levels + catalog merge + error classifier + extension-load
-contract + mock-SSE integration turn) → T9 (README + verification).
+All tasks T1–T9 are complete and verified. Remaining work is release prep (not in scope): publish to
+npm, add CI, and a Spanish README if desired.
