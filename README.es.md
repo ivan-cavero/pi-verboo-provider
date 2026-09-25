@@ -11,13 +11,50 @@ mano y nada los valida contra la clave, expone la capacidad de esfuerzo de razon
 los errores estructurados de Verboo. Este paquete registra `verboo` de forma programática y cubre
 esas carencias.
 
-## Ruta rápida
+## Instalación
+
+1. Comando oficial (cuando el paquete npm esté publicado):
+
+   ```bash
+   pi install npm:@ivan-cavero/pi-verboo-provider
+   ```
+
+2. Funciona hoy (sin npm):
+
+   ```bash
+   pi install git:github.com/ivan-cavero/pi-verboo-provider
+   ```
+
+3. Instalación local al proyecto (escribe `.pi/settings.json` en el proyecto actual) — se agrega `-l`:
+
+   ```bash
+   pi install -l git:github.com/ivan-cavero/pi-verboo-provider
+   ```
+
+4. Comandos de una línea que instalan Pi si falta y después el paquete:
+
+   macOS/Linux:
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/ivan-cavero/pi-verboo-provider/main/install.sh | sh
+   ```
+
+   Windows PowerShell:
+
+   ```powershell
+   irm https://raw.githubusercontent.com/ivan-cavero/pi-verboo-provider/main/install.ps1 | iex
+   ```
+
+5. Mientras el paquete npm no esté publicado, el instalador recurre a la fuente git. Se puede definir
+   `VERBOO_PI_SOURCE` para sobrescribir la fuente que usa el instalador.
+
+## Cómo se usa
+
+Instalar → definir `VERBOO_API_KEY` (o ejecutar `/login verboo`) → listar los modelos → elegir uno con `/model`.
 
 ```bash
-pi install /path/to/pi-verboo-provider   # or npm:@ivan-cavero/pi-verboo-provider once published
-
-export VERBOO_API_KEY=...                # or run: /login verboo
-pi --list-models verboo                  # expected: 6 models
+export VERBOO_API_KEY=...   # or run: /login verboo
+pi --list-models verboo     # expected: 6 models
 ```
 
 ## Qué incluye
@@ -130,6 +167,21 @@ bun run generate-catalog # rebuild src/catalog.generated.ts from /models
 `probe-verboo` y `generate-catalog` necesitan `VERBOO_API_KEY`; fallan de forma explícita sin ella y
 nunca escriben la clave en ningún lugar. `generate-catalog` es idempotente byte a byte y se niega a
 adivinar datos de capacidad.
+
+## Mantenimiento: publicación
+
+El paquete **todavía no está publicado**. Los pasos para publicarlo son:
+
+1. Iniciar sesión en npm: `npm login`
+2. Poseer el scope `@ivan-cavero` en npm (crearlo o ser miembro de él).
+3. Publicar de forma pública: `npm publish --access public`
+
+Antes de publicar, hay que ejecutar `bun test` y `bun run typecheck`: no existe un script
+`prepublishOnly`, así que nada los ejecuta automáticamente.
+
+Descubrimiento: la palabra clave `pi-package` (ya presente en `package.json`) hace que el paquete sea
+elegible para la galería de paquetes de Pi en <https://pi.dev/packages>. No hay un paso de envío
+aparte. Los campos opcionales `pi.image` y `pi.video` añaden vistas previas en la galería.
 
 ## Procedencia
 

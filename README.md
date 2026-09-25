@@ -9,13 +9,50 @@ Pi ships a declarative Verboo integration (`~/.pi/agent/models.json`): you hardc
 validates them against your key, exposes reasoning-effort capability, or explains Verboo's structured
 errors. This package registers `verboo` programmatically and fills those gaps.
 
-## Quick path
+## Install
+
+1. Official command (once the npm package is published):
+
+   ```bash
+   pi install npm:@ivan-cavero/pi-verboo-provider
+   ```
+
+2. Works today (no npm needed):
+
+   ```bash
+   pi install git:github.com/ivan-cavero/pi-verboo-provider
+   ```
+
+3. Project-local install (writes `.pi/settings.json` in the current project) — add `-l`:
+
+   ```bash
+   pi install -l git:github.com/ivan-cavero/pi-verboo-provider
+   ```
+
+4. One-liners that install Pi when missing and then the package:
+
+   macOS/Linux:
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/ivan-cavero/pi-verboo-provider/main/install.sh | sh
+   ```
+
+   Windows PowerShell:
+
+   ```powershell
+   irm https://raw.githubusercontent.com/ivan-cavero/pi-verboo-provider/main/install.ps1 | iex
+   ```
+
+5. While the npm package is unpublished, the installer falls back to the git source. Set
+   `VERBOO_PI_SOURCE` to override the source the installer uses.
+
+## How it is used
+
+Install → set `VERBOO_API_KEY` (or run `/login verboo`) → list the models → select one with `/model`.
 
 ```bash
-pi install /path/to/pi-verboo-provider   # or npm:@ivan-cavero/pi-verboo-provider once published
-
-export VERBOO_API_KEY=...                # or run: /login verboo
-pi --list-models verboo                  # expected: 6 models
+export VERBOO_API_KEY=...   # or run: /login verboo
+pi --list-models verboo     # expected: 6 models
 ```
 
 ## What you get
@@ -122,6 +159,21 @@ bun run generate-catalog # rebuild src/catalog.generated.ts from /models
 `probe-verboo` and `generate-catalog` need `VERBOO_API_KEY`; they fail loudly without it and never
 write the key anywhere. `generate-catalog` is byte-for-byte idempotent and refuses to guess
 capability data.
+
+## Maintainer: publishing
+
+The package is **not published yet**. The steps to release it are:
+
+1. Log in to npm: `npm login`
+2. Own the `@ivan-cavero` scope on npm (create it, or be a member of it).
+3. Publish publicly: `npm publish --access public`
+
+Before publishing, run `bun test` and `bun run typecheck` — there is no `prepublishOnly` script, so
+nothing runs them for you.
+
+Discovery: the `pi-package` keyword (already in `package.json`) makes the package eligible for the
+Pi package gallery at <https://pi.dev/packages>. There is no separate submission step. The optional
+`pi.image` and `pi.video` fields add gallery previews.
 
 ## Provenance
 
