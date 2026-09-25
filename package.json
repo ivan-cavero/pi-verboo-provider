@@ -23,6 +23,7 @@
 		"LICENSE"
 	],
 	"scripts": {
+		"probe-verboo": "bun run scripts/probe-verboo.ts",
 		"generate-catalog": "bun run scripts/generate-catalog.ts",
 		"test": "bun test",
 		"typecheck": "bunx tsc --noEmit"
