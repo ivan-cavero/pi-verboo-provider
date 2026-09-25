@@ -2,7 +2,7 @@
 
 ## Objective
 
-Build `@ivan-cavero/pi-verboo-provider`, a Pi (earendil-works/pi) extension package that registers
+Build `@ivancavero/pi-verboo-provider`, a Pi (earendil-works/pi) extension package that registers
 **Verboo Code** as a first-class provider, based on the structure of `gtrabanco/pi-nan-provider`
 but deliberately improved rather than copied.
 
@@ -318,7 +318,7 @@ published later via npm.
 - `c9babef` — `feat(install): add bash and PowerShell installers`. `install.sh` (POSIX sh,
   dash/bash/zsh; macOS + Linux) and `install.ps1` (Windows PowerShell 5.1+/7+) install Pi when
   missing and then the package. Both honor `VERBOO_PI_SOURCE`, prefer
-  `npm:@ivan-cavero/pi-verboo-provider` only when the npm registry has it (quiet
+  `npm:@ivancavero/pi-verboo-provider` only when the npm registry has it (quiet
   `npm view ... version` check), and otherwise fall back to
   `git:github.com/ivan-cavero/pi-verboo-provider`. `package.json` `files` now ships both scripts in
   the npm tarball. No secrets, no sudo, non-zero exit with an actionable message on failure.
@@ -326,7 +326,7 @@ published later via npm.
   `README.es.md` (neutral professional Spanish, kept in sync) gained an ordered **Install** section
   (official npm command, git source that works today, `-l` project-local variant, curl/irm
   one-liners, `VERBOO_PI_SOURCE` override), a short **How it is used** flow, and a **Maintainer:
-  publishing** section (`npm login`, own the `@ivan-cavero` scope, `npm publish --access public`;
+  publishing** section (`npm login`, own the `@ivancavero` scope, `npm publish --access public`;
   the `pi-package` keyword enables gallery discovery at https://pi.dev/packages with optional
   `pi.image`/`pi.video`; run `bun test` + `bun run typecheck` before publishing because no
   `prepublishOnly` script exists).
@@ -349,5 +349,5 @@ published later via npm.
 ### Blocked
 
 - npm publish is **blocked on credentials**: `npm whoami` → `ENEEDAUTH` (no `~/.npmrc`), and the
-  `@ivan-cavero` scope/package do not exist on the registry yet (`npm view` → 404). Nothing was
+  `@ivancavero` scope/package do not exist on the registry yet (`npm view` → 404). Nothing was
   published; the README documents the maintainer steps instead.

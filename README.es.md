@@ -16,7 +16,7 @@ esas carencias.
 1. Comando oficial (cuando el paquete npm esté publicado):
 
    ```bash
-   pi install npm:@ivan-cavero/pi-verboo-provider
+   pi install npm:@ivancavero/pi-verboo-provider
    ```
 
 2. Funciona hoy (sin npm):
@@ -173,7 +173,7 @@ adivinar datos de capacidad.
 El paquete **todavía no está publicado**. Los pasos para publicarlo son:
 
 1. Iniciar sesión en npm: `npm login`
-2. Poseer el scope `@ivan-cavero` en npm (crearlo o ser miembro de él).
+2. Poseer el scope `@ivancavero` en npm (crearlo o ser miembro de él).
 3. Publicar de forma pública: `npm publish --access public`
 
 Antes de publicar, hay que ejecutar `bun test` y `bun run typecheck`: no existe un script

@@ -1,5 +1,5 @@
 {
-	"name": "@ivan-cavero/pi-verboo-provider",
+	"name": "@ivancavero/pi-verboo-provider",
 	"version": "0.1.0",
 	"description": "Verboo Code model provider for pi - OpenAI-compatible registration with a capability-rich live catalog and per-model thinking-level mapping",
 	"keywords": [
@@ -43,5 +43,13 @@
 		"typescript": "^5"
 	},
 	"author": "Ivan Cavero <ivancavero@pm.me>",
-	"license": "MIT"
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ivan-cavero/pi-verboo-provider.git"
+	},
+	"homepage": "https://github.com/ivan-cavero/pi-verboo-provider#readme",
+	"bugs": {
+		"url": "https://github.com/ivan-cavero/pi-verboo-provider/issues"
+	}
 }

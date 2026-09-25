@@ -3,13 +3,13 @@
 # Works on Windows PowerShell 5.1+ and PowerShell 7+.
 # Usage:
 #   ./install.ps1
-#   $env:VERBOO_PI_SOURCE = 'npm:@ivan-cavero/pi-verboo-provider'; ./install.ps1
+#   $env:VERBOO_PI_SOURCE = 'npm:@ivancavero/pi-verboo-provider'; ./install.ps1
 #
 # This script never handles your API key and never runs sudo.
 
 $ErrorActionPreference = 'Stop'
 
-$NpmPackage = 'npm:@ivan-cavero/pi-verboo-provider'
+$NpmPackage = 'npm:@ivancavero/pi-verboo-provider'
 $GitSource = 'git:github.com/ivan-cavero/pi-verboo-provider'
 $PiPackage = '@earendil-works/pi-coding-agent'
 
@@ -22,7 +22,7 @@ Usage:
 
 Environment:
   VERBOO_PI_SOURCE   Override the source passed to `pi install`.
-                     Default: npm:@ivan-cavero/pi-verboo-provider when the npm
+                     Default: npm:@ivancavero/pi-verboo-provider when the npm
                      registry has it, otherwise git:github.com/ivan-cavero/pi-verboo-provider.
 
 After install:

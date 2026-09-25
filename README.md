@@ -14,7 +14,7 @@ errors. This package registers `verboo` programmatically and fills those gaps.
 1. Official command (once the npm package is published):
 
    ```bash
-   pi install npm:@ivan-cavero/pi-verboo-provider
+   pi install npm:@ivancavero/pi-verboo-provider
    ```
 
 2. Works today (no npm needed):
@@ -165,7 +165,7 @@ capability data.
 The package is **not published yet**. The steps to release it are:
 
 1. Log in to npm: `npm login`
-2. Own the `@ivan-cavero` scope on npm (create it, or be a member of it).
+2. Own the `@ivancavero` scope on npm (create it, or be a member of it).
 3. Publish publicly: `npm publish --access public`
 
 Before publishing, run `bun test` and `bun run typecheck` — there is no `prepublishOnly` script, so

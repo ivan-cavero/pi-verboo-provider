@@ -4,13 +4,13 @@
 # Works on POSIX sh (dash, bash, zsh) on macOS and Linux.
 # Usage:
 #   sh install.sh
-#   VERBOO_PI_SOURCE=npm:@ivan-cavero/pi-verboo-provider sh install.sh
+#   VERBOO_PI_SOURCE=npm:@ivancavero/pi-verboo-provider sh install.sh
 #
 # This script never handles your API key and never runs sudo.
 
 set -eu
 
-NPM_PACKAGE="npm:@ivan-cavero/pi-verboo-provider"
+NPM_PACKAGE="npm:@ivancavero/pi-verboo-provider"
 GIT_SOURCE="git:github.com/ivan-cavero/pi-verboo-provider"
 PI_PACKAGE="@earendil-works/pi-coding-agent"
 
@@ -23,7 +23,7 @@ Usage:
 
 Environment:
   VERBOO_PI_SOURCE   Override the source passed to `pi install`.
-                     Default: npm:@ivan-cavero/pi-verboo-provider when the npm
+                     Default: npm:@ivancavero/pi-verboo-provider when the npm
                      registry has it, otherwise git:github.com/ivan-cavero/pi-verboo-provider.
 
 After install:
