@@ -39,5 +39,6 @@
 		"@types/node": "^24",
 		"typescript": "^5"
 	},
+	"author": "Ivan Cavero <ivan.cavero@solarisdevelopments.com>",
 	"license": "MIT"
 }
