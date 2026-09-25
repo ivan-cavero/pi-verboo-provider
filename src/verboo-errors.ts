@@ -11,7 +11,8 @@
  *   400 invalid request · 401 invalid key · 402 insufficient prepaid balance ·
  *   403 feature/access not allowed · 404 model not found for the key ·
  *   413 payload exceeds the limit · 428 terms acceptance required ·
- *   429 rate limited (honour `Retry-After`) · 500/502/503 transient (retryable).
+ *   429 rate limited (retryable; the retry delay is surfaced when the body
+ *   carries one) · 500/502/503 transient (retryable).
  *
  * Structured bodies this module understands:
  *   {"error":"invalid API key"}
@@ -236,9 +237,8 @@ function classifyByStatus(
 			return {
 				kind: "rate_limit",
 				message:
-					`Verboo rate-limited the request (HTTP 429, ` +
-					`${parsed.retryAfter ? `Retry-After: ${parsed.retryAfter}` : "honour the Retry-After header"}). ` +
-					`The request is safe to retry after that interval. ` +
+					`Verboo rate-limited the request (HTTP 429${parsed.retryAfter ? `, retry after ${parsed.retryAfter}` : ""}). ` +
+					`The request is safe to retry after the server's rate-limit window. ` +
 					`Original provider error: ${snippet}`,
 			};
 		case 500:

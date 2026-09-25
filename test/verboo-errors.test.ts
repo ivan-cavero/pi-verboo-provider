@@ -64,10 +64,14 @@ describe("classifyVerbooError — documented statuses", () => {
 		expect(result!.message).toContain("GET /models");
 	});
 
-	test("429 is rate limited and mentions Retry-After", () => {
-		const result = classify("429: slow down");
-		expect(result?.kind).toBe("rate_limit");
-		expect(result!.message).toContain("Retry-After");
+	test("429 is rate limited and reports the retry delay from the body", () => {
+		const plain = classify("429: slow down");
+		expect(plain?.kind).toBe("rate_limit");
+		expect(plain!.message.toLowerCase()).toContain("retry");
+
+		const withDelay = classify('429: {"error":"slow down","retry_after":"30"}');
+		expect(withDelay?.kind).toBe("rate_limit");
+		expect(withDelay!.message).toContain("30");
 	});
 
 	test("500/502/503 are transient", () => {

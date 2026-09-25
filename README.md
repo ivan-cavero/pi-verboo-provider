@@ -101,7 +101,7 @@ and a context overflow into pi's recognized overflow wording, so pi compacts and
 | `403` | access | check your plan includes the feature; list models with `GET /models` |
 | `402` | balance | add credit; the fix is balance, not the catalog |
 | `404` | model | refresh the catalog and pick a listed id |
-| `429` | rate limit | retry after the `Retry-After` interval |
+| `429` | rate limit | wait for the server's rate-limit window, then retry |
 | `500` / `502` / `503` | transient | retry shortly |
 
 A `400` that is not over the model window is left untouched — unrelated validation errors are never
