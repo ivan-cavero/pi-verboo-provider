@@ -387,3 +387,38 @@ corrected and kept in sync; `src/`, `test/` and `scripts/` were not touched.
   `expected: 6 models`, plus the Spanish `esté publicado` / `no está publicado`) — no matches.
 - Both READMEs mention `/login verboo` (5 occurrences each), state the authentication requirement,
   and label the model table as a bundled baseline / example.
+
+## Work unit: model refresh lifecycle docs + installer message fix (2026-09-25)
+
+Documented the verified pi 0.87.1 model-refresh lifecycle in both READMEs, corrected the now-misleading
+installer fallback notice, and clarified the 401 error row. `src/`, `test/` and `package.json` were not
+touched; nothing was pushed or published.
+
+- `92948db` — `docs(readme): document the model refresh lifecycle` (`README.md`, `README.es.md`).
+  - **New `Model refresh` / `Actualización de modelos` subsection** at the end of Models: there is no
+    periodic timer; the catalog refreshes only at pi interactive/RPC startup (background, 15s timeout,
+    skipped with `--offline` / `PI_OFFLINE=1`), when `/model` is opened (background), after a
+    successful `/login verboo` (that provider only), and with the forced `pi update --models`.
+    Extension registration / credential change is cache-only (no network), and `pi --list-models`
+    only prints the current snapshot without refreshing.
+  - Documents the cache at `~/.pi/agent/models-store.json` (one entry per provider plus `checkedAt`,
+    written only after a successful live fetch), the fallback order (cached catalog → committed
+    baseline; the previous catalog is never discarded), the absence of a TTL/ETag for this provider
+    (every network-triggering refresh does a live `GET /models`, unlike pi's built-in 4h window),
+    that `fetchModels` is skipped without a credential (cross-referenced to Authenticate), and the
+    practical consequence: a new/changed Verboo model appears on the next refresh, so run
+    `pi update --models` or reopen `/model` to pick one up now.
+  - **401 row** extended (one clause, both languages) so a stale stored credential is named as a
+    cause next to `VERBOO_API_KEY`, with `/login verboo` as the fix.
+- `c31c65f` — `fix(install): correct the npm-unavailable message` (`install.sh`, `install.ps1`).
+  The package is published, so "unpublished or npm unavailable" was misleading. The fallback notice
+  now reads `Could not resolve the npm package (registry unreachable or not published); using the git
+  source instead.` Only the message text changed; logic and control flow are untouched.
+
+### Verification
+
+- `bun run typecheck` — exit 0. `bun test` — 74 pass / 0 fail, 276 expect() calls, 8 files.
+- `sh -n install.sh`, `bash -n install.sh`, `dash -n install.sh` — all pass.
+- Old-message grep (`not available (unpublished or npm unavailable)`) — no matches in `install.sh`,
+  `install.ps1` or either README; the new message appears once per script.
+- Both READMEs contain the new refresh section and the 401 clarification (grep confirmed).
