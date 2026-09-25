@@ -2,7 +2,7 @@
 
 ## Objective
 
-Build `@gtrabanco/pi-verboo-provider`, a Pi (earendil-works/pi) extension package that registers
+Build `@ivan-cavero/pi-verboo-provider`, a Pi (earendil-works/pi) extension package that registers
 **Verboo Code** as a first-class provider, based on the structure of `gtrabanco/pi-nan-provider`
 but deliberately improved rather than copied.
 

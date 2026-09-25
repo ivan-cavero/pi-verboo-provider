@@ -1,5 +1,5 @@
 /**
- * @gtrabanco/pi-verboo-provider — Verboo Code provider for pi.
+ * @ivan-cavero/pi-verboo-provider — Verboo Code provider for pi.
  *
  * Registers every entry in PROVIDERS via the shared OpenAI-compatible factory.
  * The generated fallback catalog is available at startup; pi's Models runtime

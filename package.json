@@ -1,5 +1,5 @@
 {
-	"name": "@gtrabanco/pi-verboo-provider",
+	"name": "@ivan-cavero/pi-verboo-provider",
 	"version": "0.1.0",
 	"description": "Verboo Code model provider for pi - OpenAI-compatible registration with a capability-rich live catalog and per-model thinking-level mapping",
 	"keywords": [

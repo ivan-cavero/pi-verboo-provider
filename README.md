@@ -10,7 +10,7 @@ errors. This package registers `verboo` programmatically and fills those gaps.
 ## Quick path
 
 ```bash
-pi install /path/to/pi-verboo-provider   # or npm:@gtrabanco/pi-verboo-provider once published
+pi install /path/to/pi-verboo-provider   # or npm:@ivan-cavero/pi-verboo-provider once published
 
 export VERBOO_API_KEY=...                # or run: /login verboo
 pi --list-models verboo                  # expected: 6 models
