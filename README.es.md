@@ -13,13 +13,13 @@ esas carencias.
 
 ## Instalación
 
-1. Comando oficial (cuando el paquete npm esté publicado):
+1. Comando oficial (npm):
 
    ```bash
    pi install npm:@ivancavero/pi-verboo-provider
    ```
 
-2. Funciona hoy (sin npm):
+2. Alternativa sin npm (se instala directamente desde la fuente git):
 
    ```bash
    pi install git:github.com/ivan-cavero/pi-verboo-provider
@@ -28,7 +28,7 @@ esas carencias.
 3. Instalación local al proyecto (escribe `.pi/settings.json` en el proyecto actual) — se agrega `-l`:
 
    ```bash
-   pi install -l git:github.com/ivan-cavero/pi-verboo-provider
+   pi install -l npm:@ivancavero/pi-verboo-provider
    ```
 
 4. Comandos de una línea que instalan Pi si falta y después el paquete:
@@ -45,17 +45,57 @@ esas carencias.
    irm https://raw.githubusercontent.com/ivan-cavero/pi-verboo-provider/main/install.ps1 | iex
    ```
 
-5. Mientras el paquete npm no esté publicado, el instalador recurre a la fuente git. Se puede definir
-   `VERBOO_PI_SOURCE` para sobrescribir la fuente que usa el instalador.
+5. Los instaladores prefieren el paquete npm publicado y recurren a la fuente git cuando npm no está
+   disponible. Se puede definir `VERBOO_PI_SOURCE` para sobrescribir la fuente que usa el instalador.
+
+Instalar el paquete no basta para ver modelos: primero hay que autenticarse (siguiente sección).
+
+## Autenticación
+
+El paquete por sí solo no basta: **el provider debe estar autenticado antes de que aparezca cualquier
+modelo.** Con el paquete instalado y sin credenciales, `pi --list-models verboo` imprime:
+
+```
+No models available. Use /login to log into a provider via OAuth or API key.
+```
+
+### Recomendado: `/login verboo` (persistente)
+
+1. Iniciar pi.
+2. Escribir `/login verboo`.
+3. Pegar la clave de API de Verboo cuando se solicite.
+4. La clave queda almacenada para sesiones posteriores y los modelos pasan a estar disponibles.
+
+### Alternativa: `VERBOO_API_KEY`
+
+Exportar la clave en el entorno donde se ejecuta `pi`:
+
+```bash
+export VERBOO_API_KEY=...
+```
+
+### Precedencia
+
+| Origen | Precedencia |
+|---|---|
+| `VERBOO_API_KEY` | Se usa cuando no hay ninguna credencial almacenada |
+| `/login verboo` | La credencial almacenada gana sobre la variable de entorno |
+
+Una variable de entorno vacía no cuenta como configurada. El provider queda sin configurar hasta que
+una de las dos fuentes proporcione una clave no vacía.
 
 ## Cómo se usa
 
-Instalar → definir `VERBOO_API_KEY` (o ejecutar `/login verboo`) → listar los modelos → elegir uno con `/model`.
+Instalar → autenticarse → listar los modelos → elegir uno con `/model`.
 
 ```bash
-export VERBOO_API_KEY=...   # or run: /login verboo
-pi --list-models verboo     # expected: 6 models
+# 1. Install (see above).
+# 2. Authenticate: run /login verboo inside pi, or export VERBOO_API_KEY=...
+pi --list-models verboo     # lists the models available to your key
 ```
+
+Sin autenticación, el mismo comando imprime `No models available. Use /login to log into a provider
+via OAuth or API key.` Después, ejecutar `/model` dentro de pi para elegir uno de los modelos listados.
 
 ## Qué incluye
 
@@ -72,6 +112,12 @@ payload (payload sanitizer) — la sonda demostró que Verboo acepta todas las f
 rompían Nan — véase [Procedencia](#procedencia).
 
 ## Modelos
+
+La tabla siguiente es la **línea de base incluida en el paquete / ejemplo**: el catálogo versionado en
+el paquete para que pi pueda arrancar sin red. La lista en vivo es la autoritativa: el provider la
+obtiene de `GET /models`, que "devuelve únicamente los modelos disponibles para la clave autenticada",
+así que el conjunto depende de la cuenta, el plan y el rol. Es posible ver más, menos o distintos
+modelos que esta línea de base.
 
 Los niveles de razonamiento son los niveles de pi que realmente se ofrecen, derivados de los
 esfuerzos declarados por Verboo. `maxTokens` es `65536` para todos los modelos — véase la advertencia
@@ -111,16 +157,6 @@ por modelo cuando se necesita ese margen:
 
 `modelOverrides` cambia los metadatos de los modelos que proporciona la extensión sin reemplazar el
 catálogo. El mismo mecanismo puede fijar `contextWindow`, `thinkingLevelMap`, `input` o `compat`.
-
-## Autenticación
-
-| Origen | Precedencia |
-|---|---|
-| `VERBOO_API_KEY` | Se usa cuando no hay ninguna credencial almacenada |
-| `/login verboo` | La credencial almacenada gana sobre la variable de entorno |
-
-Una variable de entorno vacía no cuenta como configurada. El provider queda sin configurar hasta que
-una de las dos fuentes proporcione una clave no vacía.
 
 ## Niveles de razonamiento
 
@@ -170,10 +206,11 @@ adivinar datos de capacidad.
 
 ## Mantenimiento: publicación
 
-El paquete **todavía no está publicado**. Los pasos para publicarlo son:
+Publicado como `@ivancavero/pi-verboo-provider@0.1.0` en npm (público) y listado en la galería de Pi
+en <https://pi.dev/packages/@ivancavero/pi-verboo-provider>. Para publicar una versión futura:
 
-1. Iniciar sesión en npm: `npm login`
-2. Poseer el scope `@ivancavero` en npm (crearlo o ser miembro de él).
+1. Subir `version` en `package.json`.
+2. Iniciar sesión en npm: `npm login` (hay que poseer el scope `@ivancavero`).
 3. Publicar de forma pública: `npm publish --access public`
 
 Antes de publicar, hay que ejecutar `bun test` y `bun run typecheck`: no existe un script
