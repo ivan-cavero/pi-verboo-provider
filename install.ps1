@@ -117,7 +117,6 @@ if (-not (Get-Command pi -ErrorAction SilentlyContinue)) {
 	exit 1
 }
 
-Write-Host "Installing $source..."
 $install = Invoke-Native -Command 'pi' -Arguments @('install', $source)
 if ($install.ExitCode -ne 0) {
 	Write-Host "Error: `pi install $source` failed." -ForegroundColor Red

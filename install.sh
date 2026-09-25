@@ -91,7 +91,6 @@ if ! command -v pi >/dev/null 2>&1; then
 	exit 1
 fi
 
-printf 'Installing %s...\n' "$SOURCE"
 if ! install_output=$(pi install "$SOURCE" 2>&1); then
 	printf 'Error: `pi install %s` failed.\n' "$SOURCE" >&2
 	printf '%s\n' "$install_output" >&2
