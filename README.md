@@ -152,6 +152,31 @@ the probe measured `262144` accepted on the 1M-context models and rejected upstr
 `modelOverrides` changes metadata for the extension-provided models without replacing the catalog.
 The same mechanism can pin `contextWindow`, `thinkingLevelMap`, `input`, or `compat`.
 
+### Model refresh
+
+There is **no periodic timer**. The catalog refreshes only at these moments:
+
+| When | Network refresh? | Notes |
+|---|---|---|
+| pi interactive/RPC **startup** | Yes, in background | Baseline + cached catalog are shown first; the live refresh runs after, with a 15s timeout. Skipped with `--offline` / `PI_OFFLINE=1`. |
+| Opening **`/model`** | Yes, in background | The current snapshot renders immediately; the refresh runs behind it. |
+| After **`/login verboo`** succeeds | Yes, that provider only | |
+| **`pi update --models`** | Yes, forced | The only explicit command to force a refresh. |
+| Extension registration / credential change | **No** (cache-only) | No network call. |
+| **`pi --list-models`** | **No** | Prints only the current snapshot (committed baseline + cache). It does not refresh. |
+
+- **Cache**: `~/.pi/agent/models-store.json` holds one entry per provider with the models plus a
+  `checkedAt` timestamp. It is written **only** after a successful live fetch.
+- **Fallback order**: cached catalog → committed baseline. If the fetch fails or the network is
+  disallowed, the cached catalog (then the baseline) is used; the previous catalog is not discarded.
+- **No TTL/ETag for this provider**: `fetchModels` has no freshness gate, so every network-triggering
+  refresh performs a live `GET /models`. pi's built-in catalog instead uses a 4h window.
+- **Auth is required for the live list**: `fetchModels` is skipped entirely when no credential
+  resolves (see [Authenticate](#authenticate)).
+- **Consequence**: a model added or changed on Verboo's side appears after the next refresh (startup,
+  opening `/model`, or `pi update --models`) — never instantly. To pick up a new Verboo model now,
+  run `pi update --models` or reopen `/model`.
+
 ## Thinking levels
 
 Each model's `thinkingLevelMap` comes from that model's Verboo `effort_levels`: `none` maps to pi
@@ -171,7 +196,7 @@ and a context overflow into pi's recognized overflow wording, so pi compacts and
 |---|---|---|
 | `413`, or a `400` on an over-window request | context overflow | pi compacts and retries automatically |
 | `428` / `terms_acceptance_required` | terms | accept at the returned `acceptUrl` (version shown) |
-| `401` | access | check `VERBOO_API_KEY` is valid |
+| `401` | access | check `VERBOO_API_KEY` is valid; a stale stored credential can also cause a 401, so re-run `/login verboo` |
 | `403` | access | check your plan includes the feature; list models with `GET /models` |
 | `402` | balance | add credit; the fix is balance, not the catalog |
 | `404` | model | refresh the catalog and pick a listed id |

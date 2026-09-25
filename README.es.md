@@ -158,6 +158,33 @@ por modelo cuando se necesita ese margen:
 `modelOverrides` cambia los metadatos de los modelos que proporciona la extensión sin reemplazar el
 catálogo. El mismo mecanismo puede fijar `contextWindow`, `thinkingLevelMap`, `input` o `compat`.
 
+### Actualización de modelos
+
+**No existe un temporizador periódico.** El catálogo se actualiza solo en estos momentos:
+
+| Momento | ¿Actualización por red? | Notas |
+|---|---|---|
+| **Arranque** de pi interactivo/RPC | Sí, en segundo plano | Primero se muestran la línea de base y el catálogo en caché; la actualización en vivo se ejecuta después, con un tiempo límite de 15 s. Se omite con `--offline` / `PI_OFFLINE=1`. |
+| Apertura de **`/model`** | Sí, en segundo plano | La instantánea actual se muestra de inmediato; la actualización se ejecuta por detrás. |
+| Después de que **`/login verboo`** tenga éxito | Sí, solo ese provider | |
+| **`pi update --models`** | Sí, forzada | El único comando explícito para forzar una actualización. |
+| Registro de extensión / cambio de credencial | **No** (solo caché) | Sin llamada de red. |
+| **`pi --list-models`** | **No** | Solo imprime la instantánea actual (línea de base versionada + caché). No actualiza. |
+
+- **Caché**: `~/.pi/agent/models-store.json` contiene una entrada por provider con los modelos y una
+  marca de tiempo `checkedAt`. Solo se escribe **después** de una obtención en vivo correcta.
+- **Orden de respaldo**: catálogo en caché → línea de base versionada. Si la obtención falla o la red
+  no está permitida, se usa el catálogo en caché (y luego la línea de base); el catálogo anterior no
+  se descarta.
+- **Sin TTL/ETag para este provider**: el `fetchModels` de este provider no tiene control de frescura,
+  por lo que cada actualización que usa la red realiza un `GET /models` en vivo (a diferencia del
+  catálogo integrado de pi, que usa una ventana de 4 h).
+- **La autenticación es obligatoria para la lista en vivo**: `fetchModels` se omite por completo
+  cuando no se resuelve ninguna credencial (véase [Autenticación](#autenticación)).
+- **Consecuencia**: un modelo añadido o modificado del lado de Verboo aparece después de la siguiente
+  actualización (arranque, apertura de `/model` o `pi update --models`), nunca al instante. Para
+  incorporar ahora un modelo nuevo de Verboo, ejecutar `pi update --models` o volver a abrir `/model`.
+
 ## Niveles de razonamiento
 
 El `thinkingLevelMap` de cada modelo proviene de los `effort_levels` de Verboo de ese modelo: `none`
@@ -180,7 +207,7 @@ pi compacte y reintente.
 |---|---|---|
 | `413`, o un `400` en una petición que excede la ventana | desbordamiento de contexto | pi compacta y reintenta automáticamente |
 | `428` / `terms_acceptance_required` | términos | aceptar en el `acceptUrl` devuelto (se muestra la versión) |
-| `401` | acceso | comprobar que `VERBOO_API_KEY` es válida |
+| `401` | acceso | comprobar que `VERBOO_API_KEY` es válida; una credencial almacenada obsoleta también puede causar un 401, así que volver a ejecutar `/login verboo` |
 | `403` | acceso | comprobar que el plan incluye la función; listar modelos con `GET /models` |
 | `402` | saldo | añadir crédito; la solución es el saldo, no el catálogo |
 | `404` | modelo | actualizar el catálogo y elegir un id listado |
