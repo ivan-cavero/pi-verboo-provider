@@ -309,3 +309,45 @@ the deferred items above are recorded. Remaining work is release prep (not in sc
 add CI, and a Spanish README if desired.
 
 - `README.es.md` added (Spanish translation of `README.md`, linked from both files) — commit `adb32c4`.
+
+## Work unit: installers + publish documentation (2026-09-25)
+
+Added re-runnable installers and publishing docs so the package can be installed today via git and
+published later via npm.
+
+- `c9babef` — `feat(install): add bash and PowerShell installers`. `install.sh` (POSIX sh,
+  dash/bash/zsh; macOS + Linux) and `install.ps1` (Windows PowerShell 5.1+/7+) install Pi when
+  missing and then the package. Both honor `VERBOO_PI_SOURCE`, prefer
+  `npm:@ivan-cavero/pi-verboo-provider` only when the npm registry has it (quiet
+  `npm view ... version` check), and otherwise fall back to
+  `git:github.com/ivan-cavero/pi-verboo-provider`. `package.json` `files` now ships both scripts in
+  the npm tarball. No secrets, no sudo, non-zero exit with an actionable message on failure.
+- `690c156` — `docs(readme): document install, usage and publishing`. `README.md` and
+  `README.es.md` (neutral professional Spanish, kept in sync) gained an ordered **Install** section
+  (official npm command, git source that works today, `-l` project-local variant, curl/irm
+  one-liners, `VERBOO_PI_SOURCE` override), a short **How it is used** flow, and a **Maintainer:
+  publishing** section (`npm login`, own the `@ivan-cavero` scope, `npm publish --access public`;
+  the `pi-package` keyword enables gallery discovery at https://pi.dev/packages with optional
+  `pi.image`/`pi.video`; run `bun test` + `bun run typecheck` before publishing because no
+  `prepublishOnly` script exists).
+
+### Verification
+
+- `sh -n install.sh`, `bash -n install.sh`, `dash -n install.sh` — all pass.
+- `bun run typecheck` — exit 0. `bun test` — 74 pass / 0 fail, 276 expect() calls, 8 files.
+- Isolated end-to-end install (real config untouched):
+  `md5sum ~/.pi/agent/settings.json` before/after = `77287681ec02a0333a285a0e31aad37d` (unchanged).
+  `PI_CODING_AGENT_DIR="$(mktemp -d)" sh install.sh` exited 0, resolved the git source (npm 404),
+  and `PI_CODING_AGENT_DIR=<tmp> pi list` listed
+  `git:github.com/ivan-cavero/pi-verboo-provider` from the temp dir. Re-running the installer was
+  idempotent (one settings entry) and the `VERBOO_PI_SOURCE` override was honored (no fallback
+  note). The forced-unpublished failure path exited 1 with an actionable message.
+- `pwsh`/`powershell` are NOT installed on this machine, so `install.ps1` was manually reviewed but
+  not executed. Syntax was checked by inspection (here-string delimiters, `$LASTEXITCODE` handling,
+  `ValueFromRemainingArguments` splat, no CRLF).
+
+### Blocked
+
+- npm publish is **blocked on credentials**: `npm whoami` → `ENEEDAUTH` (no `~/.npmrc`), and the
+  `@ivan-cavero` scope/package do not exist on the registry yet (`npm view` → 404). Nothing was
+  published; the README documents the maintainer steps instead.
