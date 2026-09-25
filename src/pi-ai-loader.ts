@@ -18,6 +18,7 @@
 import * as piAi from "@earendil-works/pi-ai";
 import type { ProviderStreams } from "@earendil-works/pi-ai";
 import { createRequire } from "node:module";
+import { isAbsolute } from "node:path";
 import { pathToFileURL } from "node:url";
 
 /** The only pi-ai specifier this package may import. */
@@ -61,9 +62,10 @@ export function openAICompletionsApiFrom(namespace: unknown): OpenAICompletionsA
 	return typeof candidate === "function" ? (candidate as OpenAICompletionsApiFactory) : undefined;
 }
 
-// `import.meta.resolve` is absent from bun-types' `ImportMeta`, so read it
-// through an explicit shape. Referenced directly so pi's jiti loader can
-// rewrite it; Bun/Node expose it at runtime.
+// `import.meta.resolve` is absent from bun-types' `ImportMeta`; this wrapper
+// gives callers a typed signature. It references `import.meta.resolve` DIRECTLY
+// (not through a stored variable) so pi's jiti loader can rewrite it; Bun/Node
+// expose it at runtime.
 function readImportMetaResolve(): ((specifier: string, parent?: string) => string) | undefined {
 	if (typeof import.meta.resolve !== "function") return undefined;
 	return (specifier, parent) =>
@@ -78,6 +80,20 @@ export function hostAnchorUrl(entry: string | undefined): string | undefined {
 	} catch {
 		return undefined;
 	}
+}
+
+/**
+ * Normalize a resolver result to a URL. `import.meta.resolve` returns a URL
+ * string while `createRequire().resolve` returns a filesystem path; accepting
+ * both keeps a runtime without `import.meta.resolve` on the typed-error path
+ * instead of throwing a raw `TypeError`.
+ */
+function toResolvedRootUrl(resolved: string): URL {
+	return isAbsolute(resolved) ? pathToFileURL(resolved) : new URL(resolved);
+}
+
+function toError(error: unknown): Error {
+	return error instanceof Error ? error : new Error(String(error));
 }
 
 /**
@@ -167,19 +183,30 @@ export async function resolveOpenAICompletionsApi(host?: PiAiLoaderHost): Promis
 	try {
 		rootUrl = activeHost.resolveSpecifier(PI_AI_PACKAGE_SPECIFIER);
 	} catch (error) {
-		throw loudError(undefined, [], error instanceof Error ? error : new Error(String(error)));
+		throw loudError(undefined, [], toError(error));
 	}
 	if (!rootUrl) throw loudError(undefined, [], undefined);
 
-	// The directory-prefix guard is the same-package-instance assertion: a
-	// candidate must stay inside the package the host resolved.
-	const rootDir = new URL("./", new URL(rootUrl));
-	const candidates = [OPENAI_COMPLETIONS_LAZY_ENTRY, PI_AI_COMPAT_ENTRY].map(
-		(entry) => new URL(entry, rootDir).href,
-	);
+	// The resolver may return a `file://` URL (import.meta.resolve) or a
+	// filesystem path (createRequire). Any failure deriving candidates must
+	// surface as the typed error, never a raw TypeError.
+	let rootDir: URL;
+	let candidates: string[];
+	try {
+		rootDir = new URL("./", toResolvedRootUrl(rootUrl));
+		candidates = [OPENAI_COMPLETIONS_LAZY_ENTRY, PI_AI_COMPAT_ENTRY].map(
+			(entry) => new URL(entry, rootDir).href,
+		);
+	} catch (error) {
+		throw loudError(rootUrl, [], toError(error));
+	}
+
 	const attemptedUrls: string[] = [];
 	let lastError: Error | undefined;
 	for (const candidate of candidates) {
+		// Candidates are built relative to `rootDir`, so this check cannot fail
+		// today; it is a cheap assertion in case candidate construction changes.
+		// It does NOT prove the loaded module is the same instance as the root.
 		if (!candidate.startsWith(rootDir.href)) {
 			throw loudError(
 				rootUrl,
@@ -196,7 +223,7 @@ export async function resolveOpenAICompletionsApi(host?: PiAiLoaderHost): Promis
 			}
 			lastError = new Error(`"${OPENAI_COMPLETIONS_FACTORY_EXPORT}" is not exported by ${candidate}`);
 		} catch (error) {
-			lastError = error instanceof Error ? error : new Error(String(error));
+			lastError = toError(error);
 		}
 	}
 
