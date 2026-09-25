@@ -8,20 +8,50 @@
  * https://code.verboo.ai).
  *
  * Replacing `globalThis.fetch` with a loud throw makes an accidental live call
- * fail immediately instead of burning tokens. It exists to keep the suite
- * fully mocked.
+ * fail immediately instead of burning tokens.
+ *
+ * Narrow escape hatch: integration tests that cannot inject fetch may call
+ * `installMockFetch(handler)` to route the global fetch to an in-memory
+ * handler, and MUST call `restoreNetworkGuard()` afterwards. The hatch is
+ * explicit and per-call: the handler decides what a "mocked URL" is, and any
+ * URL it does not handle is still refused (see test/network-guard.test.ts).
  */
+
+type FetchArgs = Parameters<typeof fetch>;
 
 const originalFetch = globalThis.fetch;
 
-globalThis.fetch = (async (...args: Parameters<typeof fetch>): Promise<Response> => {
-	const input = args[0];
-	const url =
-		typeof input === "string" ? input : input instanceof URL ? input.href : (input as Request).url;
+function describeInput(input: FetchArgs[0]): string {
+	return typeof input === "string" ? input : input instanceof URL ? input.href : (input as Request).url;
+}
+
+async function guardFetch(input: FetchArgs[0]): Promise<Response> {
 	throw new Error(
-		`[test-network-guard] Refusing a real network call to ${url}. ` +
-			"Inject fetchImpl/options.fetch or use a local fixture — the test suite must never hit live endpoints.",
+		`[test-network-guard] Refusing a real network call to ${describeInput(input)}. ` +
+			"Inject fetchImpl/options.fetch, or installMockFetch(handler) explicitly — the test suite must never hit live endpoints.",
 	);
+}
+
+let mockFetch: typeof fetch | undefined;
+
+globalThis.fetch = (async (...args: FetchArgs): Promise<Response> => {
+	if (mockFetch) return mockFetch(...args);
+	return guardFetch(args[0]);
 }) as typeof fetch;
+
+/** Route the global fetch to an in-memory handler for one test (restore after). */
+export function installMockFetch(handler: typeof fetch): void {
+	mockFetch = handler;
+}
+
+/** Return to the throwing guard. Always call this in `afterEach`/`finally`. */
+export function restoreNetworkGuard(): void {
+	mockFetch = undefined;
+}
+
+/** True when the throwing guard is active (no mock installed). */
+export function isNetworkGuardActive(): boolean {
+	return mockFetch === undefined;
+}
 
 export { originalFetch };
