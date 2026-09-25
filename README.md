@@ -229,8 +229,8 @@ Published as `@ivancavero/pi-verboo-provider@0.1.0` on npm (public) and listed i
 2. Log in to npm: `npm login` (you must own the `@ivancavero` scope).
 3. Publish publicly: `npm publish --access public`
 
-Before publishing, run `bun test` and `bun run typecheck` — there is no `prepublishOnly` script, so
-nothing runs them for you.
+The `prepublishOnly` script runs `bun test` and `bun run typecheck`, so a failing check blocks the
+publish.
 
 Discovery: the `pi-package` keyword (already in `package.json`) makes the package eligible for the
 Pi package gallery at <https://pi.dev/packages>. There is no separate submission step. The optional

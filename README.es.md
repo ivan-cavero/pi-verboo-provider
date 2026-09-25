@@ -240,8 +240,8 @@ en <https://pi.dev/packages/@ivancavero/pi-verboo-provider>. Para publicar una v
 2. Iniciar sesión en npm: `npm login` (hay que poseer el scope `@ivancavero`).
 3. Publicar de forma pública: `npm publish --access public`
 
-Antes de publicar, hay que ejecutar `bun test` y `bun run typecheck`: no existe un script
-`prepublishOnly`, así que nada los ejecuta automáticamente.
+Antes de publicar, hay que ejecutar `bun test` y `bun run typecheck`: el script `prepublishOnly` los
+ejecuta automáticamente, así que un chequeo fallido bloquea la publicación.
 
 Descubrimiento: la palabra clave `pi-package` (ya presente en `package.json`) hace que el paquete sea
 elegible para la galería de paquetes de Pi en <https://pi.dev/packages>. No hay un paso de envío

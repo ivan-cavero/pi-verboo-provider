@@ -1,6 +1,6 @@
 {
 	"name": "@ivancavero/pi-verboo-provider",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Verboo Code model provider for pi - OpenAI-compatible registration with a capability-rich live catalog and per-model thinking-level mapping",
 	"keywords": [
 		"pi",
@@ -29,7 +29,8 @@
 		"probe-verboo": "bun run scripts/probe-verboo.ts",
 		"generate-catalog": "bun run scripts/generate-catalog.ts",
 		"test": "bun test",
-		"typecheck": "bunx tsc --noEmit"
+		"typecheck": "bunx tsc --noEmit",
+		"prepublishOnly": "bun test && bun run typecheck"
 	},
 	"peerDependencies": {
 		"@earendil-works/pi-ai": ">=0.87.0 <1",
