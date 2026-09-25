@@ -12,13 +12,15 @@
  *
  * Narrow escape hatch: integration tests that cannot inject fetch may call
  * `installMockFetch(handler)` to route the global fetch to an in-memory
- * handler, and MUST call `restoreNetworkGuard()` afterwards. The hatch is
- * explicit and per-call: the handler decides what a "mocked URL" is, and any
- * URL it does not handle is still refused (see test/network-guard.test.ts).
+ * handler, and MUST call `restoreNetworkGuard()` afterwards. The guard only
+ * routes: narrowing — refusing URLs the test did not mock — is the supplied
+ * handler's responsibility (see test/network-guard.test.ts).
  */
 
 type FetchArgs = Parameters<typeof fetch>;
 
+// Kept module-private on purpose: exporting it would let a test restore real
+// network access via installMockFetch(originalFetch).
 const originalFetch = globalThis.fetch;
 
 function describeInput(input: FetchArgs[0]): string {
@@ -53,5 +55,3 @@ export function restoreNetworkGuard(): void {
 export function isNetworkGuardActive(): boolean {
 	return mockFetch === undefined;
 }
-
-export { originalFetch };
