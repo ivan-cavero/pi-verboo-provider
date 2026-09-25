@@ -1,0 +1,140 @@
+# pi-verboo-provider
+
+[English](./README.md) · **Español**
+
+**Verboo Code como provider de primera clase para pi** — un catálogo de modelos en vivo y rico en
+capacidades, con niveles de razonamiento por modelo y una taxonomía de errores documentada, en lugar
+de una lista de IDs de modelos mantenida a mano.
+
+Pi incluye una integración declarativa de Verboo (`~/.pi/agent/models.json`): se codifican los IDs a
+mano y nada los valida contra la clave, expone la capacidad de esfuerzo de razonamiento ni explica
+los errores estructurados de Verboo. Este paquete registra `verboo` de forma programática y cubre
+esas carencias.
+
+## Ruta rápida
+
+```bash
+pi install /path/to/pi-verboo-provider   # or npm:@ivan-cavero/pi-verboo-provider once published
+
+export VERBOO_API_KEY=...                # or run: /login verboo
+pi --list-models verboo                  # expected: 6 models
+```
+
+## Qué incluye
+
+| Capacidad | Este paquete | `models.json` declarativo de Verboo | `pi-nan-provider` |
+|---|---|---|---|
+| Descubrimiento de modelos | Capacidades en vivo de `/models` × catálogo de respaldo versionado | IDs que se escriben a mano | IDs en vivo × models.dev |
+| Niveles de razonamiento por modelo | Derivados de los `effort_levels` de cada modelo | Se configuran manualmente | Fijos por catálogo |
+| Ventana de contexto / visión | Se leen del propio Verboo | Se adivinan o se escriben | Desde models.dev |
+| Manejo de errores | status/code documentado → causa + solución | Texto sin procesar del provider | Heurística de desbordamiento para el 400 opaco |
+| Auth | `VERBOO_API_KEY` + `/login verboo` (gana la clave almacenada) | Solo interpolación de variables de entorno | Clave almacenada/variable de entorno |
+
+Queda deliberadamente fuera del alcance: los puentes MCP, un comando de uso/cuota y un saneador de
+payload (payload sanitizer) — la sonda demostró que Verboo acepta todas las formas de payload que
+rompían Nan — véase [Procedencia](#procedencia).
+
+## Modelos
+
+Los niveles de razonamiento son los niveles de pi que realmente se ofrecen, derivados de los
+esfuerzos declarados por Verboo. `maxTokens` es `65536` para todos los modelos — véase la advertencia
+a continuación.
+
+| ID de modelo | Ventana de contexto | Visión | Niveles de razonamiento de pi admitidos |
+|---|---:|---:|---|
+| `deepseek-v4-flash` | 1,048,576 | no | `high`, `max` |
+| `deepseek-v4-flash-0731` | 1,048,576 | no | `low`, `medium`, `high`, `xhigh`, `max` |
+| `deepseek-v4.1-flash` | 1,048,576 | sí | `low`, `high`, `xhigh`, `max` |
+| `glm-5.3-flash` | 1,048,576 | sí | `low`, `high`, `max` |
+| `mimo-v2.5` | 1,048,576 | sí | solo `off` |
+| `qwen3.8-27b` | 262,144 | sí | `off`, `low`, `medium`, `xhigh` |
+
+Notas registradas en el catálogo generado: Verboo informa `vision: true` para `deepseek-v4.1-flash`
+(la configuración de pi/OpenCode solía marcarlo como solo texto), y `mimo-v2.5` no declara capacidad
+de razonamiento pero emite `reasoning_content` en las respuestas.
+
+### Advertencia sobre `maxTokens`
+
+Verboo no publica **ningún límite de tokens de salida**. `65536` es una cota conservadora, no un
+límite publicado: la sonda midió que se aceptan `262144` en los modelos de contexto de 1M y que se
+rechazan en el upstream (`502`) en `qwen3.8-27b`, donde se aceptaron `131072`. Se puede sobrescribir
+por modelo cuando se necesita ese margen:
+
+```json
+{
+  "providers": {
+    "verboo": {
+      "modelOverrides": {
+        "deepseek-v4-flash": { "maxTokens": 262144 }
+      }
+    }
+  }
+}
+```
+
+`modelOverrides` cambia los metadatos de los modelos que proporciona la extensión sin reemplazar el
+catálogo. El mismo mecanismo puede fijar `contextWindow`, `thinkingLevelMap`, `input` o `compat`.
+
+## Autenticación
+
+| Origen | Precedencia |
+|---|---|
+| `VERBOO_API_KEY` | Se usa cuando no hay ninguna credencial almacenada |
+| `/login verboo` | La credencial almacenada gana sobre la variable de entorno |
+
+Una variable de entorno vacía no cuenta como configurada. El provider queda sin configurar hasta que
+una de las dos fuentes proporcione una clave no vacía.
+
+## Niveles de razonamiento
+
+El `thinkingLevelMap` de cada modelo proviene de los `effort_levels` de Verboo de ese modelo: `none`
+se asigna al `off` de pi, los esfuerzos con el mismo nombre se propagan tal cual, y cada nivel de pi
+no admitido es un `null` explícito para que pi no lo ofrezca. La distinción importa porque pi-ai
+trata un nivel *omitido* como admitido.
+
+**El razonamiento no se puede desactivar en la mayoría de los modelos.** Solo `qwen3.8-27b` declara
+`none`, por lo que es el único modelo cuyo `off` es real. En los demás, `off` no está admitido y pi
+ajusta la petición hacia arriba hasta el nivel admitido más cercano (normalmente el `default_effort`
+del propio Verboo).
+
+## Taxonomía de errores
+
+Los errores de Verboo están documentados y estructurados. El provider los convierte en un mensaje
+accionable — y un desbordamiento de contexto en la frase de desbordamiento que pi reconoce, para que
+pi compacte y reintente.
+
+| Señal de Verboo | Clasificación | Qué hacer |
+|---|---|---|
+| `413`, o un `400` en una petición que excede la ventana | desbordamiento de contexto | pi compacta y reintenta automáticamente |
+| `428` / `terms_acceptance_required` | términos | aceptar en el `acceptUrl` devuelto (se muestra la versión) |
+| `401` | acceso | comprobar que `VERBOO_API_KEY` es válida |
+| `403` | acceso | comprobar que el plan incluye la función; listar modelos con `GET /models` |
+| `402` | saldo | añadir crédito; la solución es el saldo, no el catálogo |
+| `404` | modelo | actualizar el catálogo y elegir un id listado |
+| `429` | límite de tasa | esperar la ventana de límite de tasa del servidor y reintentar |
+| `500` / `502` / `503` | transitorio | reintentar en breve |
+
+Un `400` que no excede la ventana del modelo se deja intacto — los errores de validación no
+relacionados nunca se reetiquetan como desbordamiento.
+
+## Desarrollo
+
+```bash
+bun install
+bun run typecheck        # tsc --noEmit
+bun test                 # no network; fetch is guarded in tests
+bun run probe-verboo     # live compat/cap probes -> scripts/probe-report.json
+bun run generate-catalog # rebuild src/catalog.generated.ts from /models
+```
+
+`probe-verboo` y `generate-catalog` necesitan `VERBOO_API_KEY`; fallan de forma explícita sin ella y
+nunca escriben la clave en ningún lugar. `generate-catalog` es idempotente byte a byte y se niega a
+adivinar datos de capacidad.
+
+## Procedencia
+
+Las flags de compat se **miden, no se suponen**: `scripts/probe-report.json` registra las sondas en
+vivo (uso del stream con y sin `stream_options`, `reasoning_effort: "max"`, `tools` vacíos, campos
+desconocidos, `reasoning_content` reproducido y los intentos de límite de salida por modelo). Las
+cabeceras de `src/catalog.generated.ts` incluyen la hora de obtención y notas por modelo. El precio
+es cero porque Verboo no publica ninguno — los valores desconocidos se registran, nunca se inventan.

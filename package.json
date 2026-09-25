@@ -20,6 +20,7 @@
 		"src/",
 		"scripts/",
 		"README.md",
+		"README.es.md",
 		"LICENSE"
 	],
 	"scripts": {

@@ -1,5 +1,7 @@
 # pi-verboo-provider
 
+**English** · [Español](./README.es.md)
+
 **Verboo Code as a first-class pi provider** — a live, capability-rich model catalog with per-model
 thinking levels and a documented error taxonomy, instead of a hand-maintained list of model IDs.
 
