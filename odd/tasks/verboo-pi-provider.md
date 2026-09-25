@@ -150,15 +150,15 @@ model window for the generic-`400` case; never mislabel an unrelated error.
 
 ## Tasks
 
-- [ ] T1 — Scaffolding: `package.json`, `tsconfig.json`, `bunfig.toml`, `.gitignore`, `LICENSE`.
+- [x] T1 — Scaffolding: `package.json`, `tsconfig.json`, `bunfig.toml`, `.gitignore`, `LICENSE`.
       Route: inline (mechanical, no research).
 - [x] T2 — Probe: `scripts/probe-verboo.ts` measuring stream_options acceptance, reasoning_effort
       values (incl. `none`/`xhigh`/`max`), unknown-field rejection, `developer` role, empty `tools`,
       output-token cap. Emits `scripts/probe-report.json`. Route: inline (one file + bounded live
       verification; its results are the evidence T3/T4/T7 depend on).
-- [ ] T3 — `src/thinking-levels.ts`: exact per-model `ThinkingLevelMap`, unsupported ⇒ `null`,
+- [x] T3 — `src/thinking-levels.ts`: exact per-model `ThinkingLevelMap`, unsupported ⇒ `null`,
       `off` mapped to Verboo `none` only where that effort is accepted. Route: delegated.
-- [ ] T4 — `src/catalog.ts` + `scripts/generate-catalog.ts` + `manual-overrides.ts` +
+- [x] T4 — `src/catalog.ts` + `scripts/generate-catalog.ts` + `manual-overrides.ts` +
       `src/catalog.generated.ts`. Route: delegated.
 - [ ] T5 — `src/verboo-errors.ts`. Route: delegated.
 - [ ] T6 — `src/pi-ai-loader.ts` (compact port of the reference, host-anchored, loud failure).
@@ -168,6 +168,12 @@ model window for the generic-`400` case; never mislabel an unrelated error.
       extension-load contract + one integration turn against a mock SSE gateway. Route: delegated.
 - [ ] T9 — README + verification (`bun run typecheck`, `bun test`, `pi --list-models verboo` smoke).
       Route: delegated (docs) + parent spot check.
+
+## Work units
+
+- `0fc6e9b` — `chore(scaffold): bootstrap pi-verboo-provider package` (T1)
+- `bd60394` — `feat(thinking-levels): derive per-model pi thinking levels from Verboo efforts` (T3)
+- `c9f39d0` — `feat(catalog): add Verboo catalog with live merge and generated snapshot` (T4)
 
 ## Acceptance criteria
 
@@ -193,6 +199,14 @@ model window for the generic-`400` case; never mislabel an unrelated error.
   `scripts/probe-report.json` committed as evidence. Findings folded into the Design section above.
   Consequence: the sanitizer is dropped, `supportsUsageInStreaming`/`supportsFinishReason` are true,
   and the `maxTokens` policy is settled.
+- T1 (scaffold) done: manifest/tsconfig/bunfig/network-guard/LICENSE committed. `bun install` resolved
+  `@earendil-works/pi-ai@0.87.1` and `@earendil-works/pi-coding-agent@0.87.1` from npm (`bun.lock`).
+- T3 (thinking-levels) done: pure module mapping Verboo `effort_levels` to `ThinkingLevelMap`; emits
+  explicit `null` for every unsupported pi level (omission is a bug for all levels except
+  `xhigh`/`max`), so pi-ai offers exactly the declared efforts.
+- T4 (catalog) done: tolerant live-capability parser + generated snapshot produced by
+  `scripts/generate-catalog.ts`. Regeneration is byte-for-byte idempotent (it preserves `fetchedAt`
+  when the payload is unchanged) and fails loudly on a missing key or a failed/empty live fetch.
 
 ## Verification evidence
 
@@ -202,7 +216,13 @@ model window for the generic-`400` case; never mislabel an unrelated error.
   It does **not** return `display_name`, output cap, or pricing.
 - Streaming tail check: `usage` and `finish_reason` present with and without
   `stream_options: { include_usage: true }`.
-- `bun run typecheck` / `bun test` — pending (T1, T8).
+- `bun run typecheck` / `bun test` — `bun run typecheck` (`bunx tsc --noEmit`) exits 0 on T1+T3+T4.
+  `bun test` still pending (T8).
+- `bun install` — resolved `@earendil-works/pi-ai@0.87.1` and
+  `@earendil-works/pi-coding-agent@0.87.1` from npm; `bun.lock` committed. No faking needed.
+- `bun run generate-catalog` (with `VERBOO_API_KEY`) — fetched the 6 live models and wrote
+  `src/catalog.generated.ts`; a second plain run produced a byte-for-byte identical file (empty diff).
+  Missing-key and failed-fetch paths both exit non-zero with a clear refusal message.
 
 ## Next step
 
